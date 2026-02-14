@@ -1,20 +1,24 @@
-import { Flame, Zap, BarChart3, Scale, Trash2 } from "lucide-react";
+import { Flame, Zap, BarChart3, Scale, FileText, Trash2, AlertTriangle } from "lucide-react";
 import type { Property, ComplianceStatus } from "@/types/property";
 
 interface PropertyCardProps {
   property: Property;
   onToggle: (propertyId: string, field: keyof ComplianceStatus) => void;
   onRemove: (propertyId: string) => void;
+  onEpcOptimise: () => void;
 }
 
-const complianceItems: { key: keyof ComplianceStatus; label: string; icon: typeof Flame }[] = [
+const COMPLIANCE_FIELDS = 5;
+
+const complianceItems: { key: keyof ComplianceStatus; label: string; icon: typeof Flame; deadline?: string }[] = [
   { key: "gasSafety", label: "Gas Safety", icon: Flame },
   { key: "eicr", label: "EICR", icon: Zap },
   { key: "epc", label: "EPC", icon: BarChart3 },
   { key: "rentersRightsAct2026", label: "Renters' Rights Act 2026", icon: Scale },
+  { key: "tenantInfoStatement", label: "Tenant Info Statement", icon: FileText, deadline: "31 May 2026" },
 ];
 
-const PropertyCard = ({ property, onToggle, onRemove }: PropertyCardProps) => {
+const PropertyCard = ({ property, onToggle, onRemove, onEpcOptimise }: PropertyCardProps) => {
   const compliantCount = Object.values(property.compliance).filter(Boolean).length;
 
   return (
@@ -23,7 +27,7 @@ const PropertyCard = ({ property, onToggle, onRemove }: PropertyCardProps) => {
         <div className="flex-1 min-w-0">
           <h3 className="font-medium text-card-foreground truncate">{property.address}</h3>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {compliantCount}/4 compliant
+            {compliantCount}/{COMPLIANCE_FIELDS} compliant
           </p>
         </div>
         <button
@@ -36,24 +40,41 @@ const PropertyCard = ({ property, onToggle, onRemove }: PropertyCardProps) => {
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        {complianceItems.map(({ key, label, icon: Icon }) => {
+        {complianceItems.map(({ key, label, icon: Icon, deadline }) => {
           const isActive = property.compliance[key];
           return (
             <button
               key={key}
               onClick={() => onToggle(property.id, key)}
-              className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`relative flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                 isActive
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "bg-muted text-muted-foreground hover:bg-accent"
               }`}
             >
               <Icon className="w-4 h-4 shrink-0" />
-              <span className="truncate text-left">{label}</span>
+              <span className="truncate text-left">
+                {label}
+                {deadline && !isActive && (
+                  <span className="block text-[10px] opacity-70">Due: {deadline}</span>
+                )}
+              </span>
+              {deadline && !isActive && (
+                <AlertTriangle className="w-3 h-3 shrink-0 text-score-fair absolute top-1 right-1" />
+              )}
             </button>
           );
         })}
       </div>
+
+      {/* EPC Optimiser */}
+      <button
+        onClick={onEpcOptimise}
+        className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-accent transition-colors"
+      >
+        <BarChart3 className="w-4 h-4 text-score-good" />
+        EPC Optimiser
+      </button>
     </div>
   );
 };

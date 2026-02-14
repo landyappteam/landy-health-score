@@ -1,23 +1,29 @@
 import { useState, useEffect, useCallback } from "react";
-import type { Property, ComplianceStatus } from "@/types/property";
+import type { Property, ComplianceStatus, VaultDocument } from "@/types/property";
 
 const STORAGE_KEY = "landy-properties";
+const VAULT_KEY = "landy-vault";
 
-const loadProperties = (): Property[] => {
+const load = <T,>(key: string, fallback: T): T => {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
   } catch {
-    return [];
+    return fallback;
   }
 };
 
 export function useProperties() {
-  const [properties, setProperties] = useState<Property[]>(loadProperties);
+  const [properties, setProperties] = useState<Property[]>(() => load(STORAGE_KEY, []));
+  const [documents, setDocuments] = useState<VaultDocument[]>(() => load(VAULT_KEY, []));
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(properties));
   }, [properties]);
+
+  useEffect(() => {
+    localStorage.setItem(VAULT_KEY, JSON.stringify(documents));
+  }, [documents]);
 
   const addProperty = useCallback((address: string) => {
     const newProperty: Property = {
@@ -28,6 +34,7 @@ export function useProperties() {
         eicr: false,
         epc: false,
         rentersRightsAct2026: false,
+        tenantInfoStatement: false,
       },
     };
     setProperties((prev) => [...prev, newProperty]);
@@ -48,17 +55,47 @@ export function useProperties() {
 
   const removeProperty = useCallback((propertyId: string) => {
     setProperties((prev) => prev.filter((p) => p.id !== propertyId));
+    setDocuments((prev) => prev.filter((d) => d.propertyId !== propertyId));
   }, []);
+
+  const addDocument = useCallback((doc: Omit<VaultDocument, "id" | "addedAt">) => {
+    setDocuments((prev) => [
+      ...prev,
+      { ...doc, id: crypto.randomUUID(), addedAt: new Date().toISOString() },
+    ]);
+  }, []);
+
+  const removeDocument = useCallback((docId: string) => {
+    setDocuments((prev) => prev.filter((d) => d.id !== docId));
+  }, []);
+
+  const COMPLIANCE_FIELDS = 5;
 
   const healthScore = (() => {
     if (properties.length === 0) return 0;
-    const total = properties.length * 4;
+    const total = properties.length * COMPLIANCE_FIELDS;
     const compliant = properties.reduce((sum, p) => {
       const c = p.compliance;
-      return sum + +c.gasSafety + +c.eicr + +c.epc + +c.rentersRightsAct2026;
+      return (
+        sum +
+        +c.gasSafety +
+        +c.eicr +
+        +c.epc +
+        +c.rentersRightsAct2026 +
+        +c.tenantInfoStatement
+      );
     }, 0);
     return Math.round((compliant / total) * 100);
   })();
 
-  return { properties, addProperty, toggleCompliance, removeProperty, healthScore };
+  return {
+    properties,
+    documents,
+    addProperty,
+    toggleCompliance,
+    removeProperty,
+    addDocument,
+    removeDocument,
+    healthScore,
+  };
 }
