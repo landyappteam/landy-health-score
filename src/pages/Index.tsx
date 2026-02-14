@@ -63,7 +63,7 @@ const Index = () => {
             <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
               <Home className="w-7 h-7 text-primary" />
             </div>
-            <h3 className="text-lg font-semibold text-foreground mb-2">Velkommen!</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-2">Welcome!</h3>
             <p className="text-muted-foreground text-sm leading-relaxed">
               Let's make your property management a little more peaceful. Start by adding your first home below.
             </p>
