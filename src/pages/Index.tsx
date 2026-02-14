@@ -59,12 +59,13 @@ const Index = () => {
         )}
 
         {properties.length === 0 && (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
-              <Home className="w-8 h-8 text-muted-foreground" />
+          <div className="rounded-2xl border border-border bg-card p-6 text-center shadow-sm">
+            <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+              <Home className="w-7 h-7 text-primary" />
             </div>
-            <p className="text-muted-foreground text-sm">
-              Add your first property to begin tracking compliance.
+            <h3 className="text-lg font-semibold text-foreground mb-2">Velkommen!</h3>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Let's make your property management a little more peaceful. Start by adding your first home below.
             </p>
           </div>
         )}
