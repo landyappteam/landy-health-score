@@ -47,6 +47,10 @@
     --score-good: 80 50% 45%;
     --score-fair: 45 80% 50%;
     --score-poor: 0 65% 50%;
+
+    --risk-warm: 25 80% 55%;
+    --risk-warm-foreground: 25 90% 20%;
+    --risk-warm-muted: 30 30% 92%;
   }
 
   .dark {
@@ -81,6 +85,10 @@
     --score-good: 80 50% 45%;
     --score-fair: 45 80% 50%;
     --score-poor: 0 65% 50%;
+
+    --risk-warm: 25 70% 50%;
+    --risk-warm-foreground: 25 80% 90%;
+    --risk-warm-muted: 25 20% 18%;
   }
 }
 

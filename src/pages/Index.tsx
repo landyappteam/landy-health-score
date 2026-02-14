@@ -5,6 +5,7 @@ import ComplianceScore from "@/components/ComplianceScore";
 import PropertyCard from "@/components/PropertyCard";
 import AddPropertyForm from "@/components/AddPropertyForm";
 import EpcOptimiserModal from "@/components/EpcOptimiserModal";
+import RiskAssessmentCard from "@/components/RiskAssessmentCard";
 import { useProperties } from "@/hooks/useProperties";
 
 const Index = () => {
@@ -34,6 +35,9 @@ const Index = () => {
 
         {/* Score */}
         <ComplianceScore score={healthScore} propertyCount={properties.length} />
+
+        {/* Risk Assessment */}
+        <RiskAssessmentCard properties={properties} />
 
         {/* Add Property */}
         <div className="mb-5">
