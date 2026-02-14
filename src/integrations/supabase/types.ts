@@ -14,7 +14,104 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      documents: {
+        Row: {
+          added_at: string
+          id: string
+          name: string
+          property_id: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          id?: string
+          name: string
+          property_id: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          id?: string
+          name?: string
+          property_id?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          email: string | null
+          full_name: string | null
+          id: string
+          property_count: number | null
+          subscription_tier: string | null
+        }
+        Insert: {
+          email?: string | null
+          full_name?: string | null
+          id: string
+          property_count?: number | null
+          subscription_tier?: string | null
+        }
+        Update: {
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          property_count?: number | null
+          subscription_tier?: string | null
+        }
+        Relationships: []
+      }
+      properties: {
+        Row: {
+          address: string
+          created_at: string
+          eicr: boolean
+          epc: boolean
+          gas_safety: boolean
+          id: string
+          renters_rights_act_2026: boolean
+          tenant_info_statement: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          eicr?: boolean
+          epc?: boolean
+          gas_safety?: boolean
+          id?: string
+          renters_rights_act_2026?: boolean
+          tenant_info_statement?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          eicr?: boolean
+          epc?: boolean
+          gas_safety?: boolean
+          id?: string
+          renters_rights_act_2026?: boolean
+          tenant_info_statement?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
