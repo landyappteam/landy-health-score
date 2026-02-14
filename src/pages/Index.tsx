@@ -1,17 +1,19 @@
 import { useState } from "react";
-import { Home, FolderOpen } from "lucide-react";
+import { Home, FolderOpen, Camera } from "lucide-react";
 import { Link } from "react-router-dom";
 import ComplianceScore from "@/components/ComplianceScore";
 import PropertyCard from "@/components/PropertyCard";
 import AddPropertyForm from "@/components/AddPropertyForm";
 import EpcOptimiserModal from "@/components/EpcOptimiserModal";
 import RiskAssessmentCard from "@/components/RiskAssessmentCard";
+import DocumentScanner from "@/components/DocumentScanner";
 import { useProperties } from "@/hooks/useProperties";
 
 const Index = () => {
   const { properties, addProperty, toggleCompliance, removeProperty, healthScore } =
     useProperties();
   const [epcModalOpen, setEpcModalOpen] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">
@@ -24,13 +26,22 @@ const Index = () => {
             </div>
             <h1 className="text-xl font-bold text-foreground tracking-tight">Landy</h1>
           </div>
-          <Link
-            to="/vault"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
-          >
-            <FolderOpen className="w-4 h-4" />
-            Vault
-          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setScannerOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
+            >
+              <Camera className="w-4 h-4" />
+              Scan
+            </button>
+            <Link
+              to="/vault"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
+            >
+              <FolderOpen className="w-4 h-4" />
+              Vault
+            </Link>
+          </div>
         </header>
 
         {/* Score */}
@@ -76,6 +87,7 @@ const Index = () => {
       </div>
 
       <EpcOptimiserModal open={epcModalOpen} onClose={() => setEpcModalOpen(false)} />
+      {scannerOpen && <DocumentScanner onClose={() => setScannerOpen(false)} />}
     </div>
   );
 };
