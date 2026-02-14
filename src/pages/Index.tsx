@@ -7,13 +7,17 @@ import AddPropertyForm from "@/components/AddPropertyForm";
 import EpcOptimiserModal from "@/components/EpcOptimiserModal";
 import RiskAssessmentCard from "@/components/RiskAssessmentCard";
 import DocumentScanner from "@/components/DocumentScanner";
+import TenantPackModal from "@/components/TenantPackModal";
 import { useProperties } from "@/hooks/useProperties";
 
 const Index = () => {
-  const { properties, addProperty, toggleCompliance, removeProperty, healthScore } =
+  const { properties, documents, addProperty, toggleCompliance, removeProperty, healthScore } =
     useProperties();
   const [epcModalOpen, setEpcModalOpen] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [packPropertyId, setPackPropertyId] = useState<string | null>(null);
+
+  const packProperty = packPropertyId ? properties.find((p) => p.id === packPropertyId) : null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -68,6 +72,7 @@ const Index = () => {
                 onToggle={toggleCompliance}
                 onRemove={removeProperty}
                 onEpcOptimise={() => setEpcModalOpen(true)}
+                onGeneratePack={(id) => setPackPropertyId(id)}
               />
             ))}
           </div>
@@ -88,6 +93,13 @@ const Index = () => {
 
       <EpcOptimiserModal open={epcModalOpen} onClose={() => setEpcModalOpen(false)} />
       {scannerOpen && <DocumentScanner onClose={() => setScannerOpen(false)} />}
+      {packProperty && (
+        <TenantPackModal
+          property={packProperty}
+          documents={documents}
+          onClose={() => setPackPropertyId(null)}
+        />
+      )}
     </div>
   );
 };

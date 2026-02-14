@@ -1,4 +1,4 @@
-import { Flame, Zap, BarChart3, Scale, FileText, Trash2, AlertTriangle } from "lucide-react";
+import { Flame, Zap, BarChart3, Scale, FileText, Trash2, AlertTriangle, PackageOpen } from "lucide-react";
 import type { Property, ComplianceStatus } from "@/types/property";
 
 interface PropertyCardProps {
@@ -6,6 +6,7 @@ interface PropertyCardProps {
   onToggle: (propertyId: string, field: keyof ComplianceStatus) => void;
   onRemove: (propertyId: string) => void;
   onEpcOptimise: () => void;
+  onGeneratePack: (propertyId: string) => void;
 }
 
 const COMPLIANCE_FIELDS = 5;
@@ -18,7 +19,7 @@ const complianceItems: { key: keyof ComplianceStatus; label: string; icon: typeo
   { key: "tenantInfoStatement", label: "Tenant Info Statement", icon: FileText, deadline: "31 May 2026" },
 ];
 
-const PropertyCard = ({ property, onToggle, onRemove, onEpcOptimise }: PropertyCardProps) => {
+const PropertyCard = ({ property, onToggle, onRemove, onEpcOptimise, onGeneratePack }: PropertyCardProps) => {
   const compliantCount = Object.values(property.compliance).filter(Boolean).length;
 
   return (
@@ -67,14 +68,23 @@ const PropertyCard = ({ property, onToggle, onRemove, onEpcOptimise }: PropertyC
         })}
       </div>
 
-      {/* EPC Optimiser */}
-      <button
-        onClick={onEpcOptimise}
-        className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-accent transition-colors"
-      >
-        <BarChart3 className="w-4 h-4 text-score-good" />
-        EPC Optimiser
-      </button>
+      {/* Actions */}
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <button
+          onClick={onEpcOptimise}
+          className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-accent transition-colors"
+        >
+          <BarChart3 className="w-4 h-4 text-score-good" />
+          EPC Optimiser
+        </button>
+        <button
+          onClick={() => onGeneratePack(property.id)}
+          className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-accent transition-colors"
+        >
+          <PackageOpen className="w-4 h-4 text-primary" />
+          Tenant Pack
+        </button>
+      </div>
     </div>
   );
 };
