@@ -174,6 +174,7 @@ const InductionWizard = () => {
   const [searchParams] = useSearchParams();
   const propertyId = searchParams.get("propertyId");
   const propertyAddress = searchParams.get("address") || "Property";
+  const heatingParam = searchParams.get("heating") as "gas" | "electric" | "oil" | null;
   const { toast } = useToast();
   const { tier } = useUserTier();
   const isPro = tier === "pro";
@@ -191,10 +192,10 @@ const InductionWizard = () => {
   const [proModalOpen, setProModalOpen] = useState(false);
   const [validationMsg, setValidationMsg] = useState<string | null>(null);
 
-  const [data, setData] = useState<InductionData>({
+  const [data, setData] = useState<InductionData>(() => ({
     propertyType: null,
-    hasGas: true,
-    hasOil: false,
+    hasGas: heatingParam === "gas" || !heatingParam,
+    hasOil: heatingParam === "oil",
     gas: { reading: "", photoUrl: null, uploading: false },
     electric: { reading: "", photoUrl: null, uploading: false },
     water: { reading: "", photoUrl: null, uploading: false },
@@ -229,7 +230,7 @@ const InductionWizard = () => {
     fireExtinguishers: false,
     fireExitSignage: false,
     tenantSignature: null,
-  });
+  }));
 
   // Friendly fallback if no property selected (after all hooks)
   if (!propertyId) {

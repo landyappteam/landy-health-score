@@ -9,6 +9,7 @@ export interface ComplianceStatus {
 export type ComplianceNA = Partial<Record<keyof ComplianceStatus, boolean>>;
 
 export type PropertyType = "house" | "flat" | "hmo";
+export type HeatingType = "gas" | "electric" | "oil";
 
 export interface Property {
   id: string;
@@ -16,6 +17,7 @@ export interface Property {
   compliance: ComplianceStatus;
   complianceNA?: ComplianceNA;
   propertyType?: PropertyType;
+  heatingType?: HeatingType;
   mouldCheckPassed?: boolean;
   windowRestrictorsOk?: boolean;
 }
