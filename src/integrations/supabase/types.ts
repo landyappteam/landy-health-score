@@ -66,6 +66,7 @@ export type Database = {
           how_to_rent_received: boolean
           id: string
           property_id: string
+          smoke_alarm_photo_url: string | null
           smoke_alarms_tested: boolean
           stopcock_located: boolean
           tenant_signature: string | null
@@ -90,6 +91,7 @@ export type Database = {
           how_to_rent_received?: boolean
           id?: string
           property_id: string
+          smoke_alarm_photo_url?: string | null
           smoke_alarms_tested?: boolean
           stopcock_located?: boolean
           tenant_signature?: string | null
@@ -114,6 +116,7 @@ export type Database = {
           how_to_rent_received?: boolean
           id?: string
           property_id?: string
+          smoke_alarm_photo_url?: string | null
           smoke_alarms_tested?: boolean
           stopcock_located?: boolean
           tenant_signature?: string | null

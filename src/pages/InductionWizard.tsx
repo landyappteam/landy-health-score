@@ -43,6 +43,8 @@ interface InductionData {
   water: MeterReading;
   smokeAlarmsTested: boolean;
   carbonMonoxideTested: boolean;
+  alarmTestPhotoUrl: string | null;
+  alarmTestUploading: boolean;
   stopcockShown: boolean;
   epcReceived: boolean;
   gasSafetyReceived: boolean;
@@ -70,8 +72,8 @@ const DOC_TOGGLES = [
   { key: "epcReceived" as const, label: "EPC provided" },
   { key: "gasSafetyReceived" as const, label: "Gas Safety Certificate provided" },
   { key: "eicrReceived" as const, label: "EICR provided" },
-  { key: "howToRentReceived" as const, label: "How to Rent 2026 provided" },
-  { key: "govInfoSheetReceived" as const, label: "2026 Government Information Sheet provided" },
+  { key: "howToRentReceived" as const, label: "How to Rent Guide provided" },
+  { key: "govInfoSheetReceived" as const, label: "Government Information Sheet 2026 provided" },
 ];
 
 const useUserTier = () => {
@@ -96,6 +98,7 @@ const InductionWizard = () => {
     gas: useRef<HTMLInputElement>(null),
     electric: useRef<HTMLInputElement>(null),
     water: useRef<HTMLInputElement>(null),
+    alarmTest: useRef<HTMLInputElement>(null),
   };
 
   const [step, setStep] = useState(0);
@@ -108,6 +111,8 @@ const InductionWizard = () => {
     water: { reading: "", photoUrl: null, uploading: false },
     smokeAlarmsTested: false,
     carbonMonoxideTested: false,
+    alarmTestPhotoUrl: null,
+    alarmTestUploading: false,
     stopcockShown: false,
     epcReceived: false,
     gasSafetyReceived: false,
@@ -157,8 +162,31 @@ const InductionWizard = () => {
     });
   };
 
-  const triggerFileInput = (meter: "gas" | "electric" | "water") => {
-    fileInputRefs[meter].current?.click();
+  const handleAlarmPhotoUpload = async (file: File) => {
+    setData((p) => ({ ...p, alarmTestUploading: true }));
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `${propertyId || "unknown"}/alarm-test-${Date.now()}.${ext}`;
+
+    const { error } = await supabase.storage
+      .from("meter-photos")
+      .upload(path, file, { upsert: true });
+
+    if (error) {
+      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+      setData((p) => ({ ...p, alarmTestUploading: false }));
+      return;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from("meter-photos")
+      .getPublicUrl(path);
+
+    setData((p) => ({ ...p, alarmTestPhotoUrl: urlData.publicUrl, alarmTestUploading: false }));
+    toast({ title: "Photo uploaded", description: "Alarm test photo saved." });
+  };
+
+  const triggerFileInput = (key: "gas" | "electric" | "water" | "alarmTest") => {
+    fileInputRefs[key].current?.click();
   };
 
   /* ─── validation ─── */
@@ -398,10 +426,10 @@ const InductionWizard = () => {
                       <Camera className="w-4 h-4" />
                     )}
                     {data[key].photoUrl
-                      ? "Done"
+                      ? "Done ✓"
                       : data[key].uploading
                       ? "Uploading…"
-                      : "Add Photo"}
+                      : "Snap Meter Photo"}
                   </Button>
                 </div>
 
@@ -433,24 +461,112 @@ const InductionWizard = () => {
             <p className="text-sm text-muted-foreground -mt-2">
               Confirm each safety item has been checked on the day of move-in.
             </p>
-            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-5">
-              {[
-                { id: "smokeAlarmsTested" as const, label: "Smoke Alarms Tested (Date of Move-in)" },
-                { id: "carbonMonoxideTested" as const, label: "Carbon Monoxide Alarms Tested" },
-                { id: "stopcockShown" as const, label: "Water Stopcock Location Shown" },
-              ].map(({ id, label }) => (
-                <div key={id} className="flex items-start gap-3">
+
+            {/* Smoke & CO Alarms */}
+            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-4">
+              <div className="flex items-center gap-2.5">
+                <div
+                  className="flex items-center justify-center w-8 h-8 rounded-lg"
+                  style={{ backgroundColor: "hsl(var(--hygge-sage) / 0.15)" }}
+                >
+                  <AlertCircle className="w-4 h-4" style={{ color: "hsl(var(--hygge-sage))" }} />
+                </div>
+                <span className="text-sm font-semibold text-foreground">Smoke & CO Alarms</span>
+              </div>
+
+              <div className="space-y-3.5">
+                <div className="flex items-start gap-3">
                   <Checkbox
-                    id={id}
-                    checked={data[id]}
-                    onCheckedChange={(v) => setData((p) => ({ ...p, [id]: !!v }))}
+                    id="smokeAlarmsTested"
+                    checked={data.smokeAlarmsTested}
+                    onCheckedChange={(v) => setData((p) => ({ ...p, smokeAlarmsTested: !!v }))}
                     className="mt-0.5"
                   />
-                  <Label htmlFor={id} className="text-sm cursor-pointer leading-snug">
-                    {label}
+                  <Label htmlFor="smokeAlarmsTested" className="text-sm cursor-pointer leading-snug">
+                    Smoke Alarms Tested (Date of Move-in)
                   </Label>
                 </div>
-              ))}
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="carbonMonoxideTested"
+                    checked={data.carbonMonoxideTested}
+                    onCheckedChange={(v) => setData((p) => ({ ...p, carbonMonoxideTested: !!v }))}
+                    className="mt-0.5"
+                  />
+                  <Label htmlFor="carbonMonoxideTested" className="text-sm cursor-pointer leading-snug">
+                    Carbon Monoxide Alarms Tested
+                  </Label>
+                </div>
+              </div>
+
+              {/* Take Photo of Alarm Test */}
+              <div className="pt-1">
+                <input
+                  ref={fileInputRefs.alarmTest}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleAlarmPhotoUpload(file);
+                  }}
+                />
+                <Button
+                  variant="outline"
+                  className="w-full rounded-xl gap-2"
+                  style={
+                    data.alarmTestPhotoUrl
+                      ? {
+                          backgroundColor: "hsl(var(--hygge-sage))",
+                          color: "hsl(var(--hygge-sage-foreground))",
+                          borderColor: "hsl(var(--hygge-sage))",
+                        }
+                      : {}
+                  }
+                  disabled={data.alarmTestUploading}
+                  onClick={() => triggerFileInput("alarmTest")}
+                >
+                  {data.alarmTestUploading ? (
+                    <span className="landy-spinner" />
+                  ) : (
+                    <Camera className="w-4 h-4" />
+                  )}
+                  {data.alarmTestPhotoUrl
+                    ? "Alarm Test Photo Captured ✓"
+                    : data.alarmTestUploading
+                    ? "Uploading…"
+                    : "Take Photo of Alarm Test"}
+                </Button>
+                {data.alarmTestPhotoUrl && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <ImageIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                    <a
+                      href={data.alarmTestPhotoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-primary underline underline-offset-2 truncate"
+                    >
+                      View alarm test photo
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Stopcock */}
+            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+              <div className="flex items-start gap-3">
+                <Checkbox
+                  id="stopcockShown"
+                  checked={data.stopcockShown}
+                  onCheckedChange={(v) => setData((p) => ({ ...p, stopcockShown: !!v }))}
+                  className="mt-0.5"
+                />
+                <Label htmlFor="stopcockShown" className="text-sm cursor-pointer leading-snug">
+                  Water Stopcock Location Shown
+                </Label>
+              </div>
             </div>
           </div>
         )}
