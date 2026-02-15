@@ -168,14 +168,6 @@ const InductionWizard = () => {
   const propertyId = searchParams.get("propertyId");
   const propertyAddress = searchParams.get("address") || "Property";
   const { toast } = useToast();
-
-  // Redirect to dashboard if no property selected
-  useEffect(() => {
-    if (!propertyId) {
-      toast({ title: "No property selected", description: "Please start an induction from a property card.", variant: "destructive" });
-      navigate("/", { replace: true });
-    }
-  }, [propertyId, navigate, toast]);
   const { tier } = useUserTier();
   const isPro = tier === "pro";
 
@@ -187,6 +179,7 @@ const InductionWizard = () => {
   };
 
   const [step, setStep] = useState(0);
+  const [saving, setSaving] = useState(false);
   const [proModalOpen, setProModalOpen] = useState(false);
   const [validationMsg, setValidationMsg] = useState<string | null>(null);
 
@@ -223,6 +216,34 @@ const InductionWizard = () => {
     fireExitSignage: false,
     tenantSignature: null,
   });
+
+  // Friendly fallback if no property selected (after all hooks)
+  if (!propertyId) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <div className="w-full max-w-sm rounded-[12px] border border-border bg-card p-7 text-center space-y-4 shadow-md">
+          <div className="mx-auto flex items-center justify-center w-14 h-14 rounded-[12px]"
+            style={{ backgroundColor: "hsl(var(--hygge-sage) / 0.15)" }}>
+            <AlertCircle className="w-7 h-7" style={{ color: "hsl(var(--hygge-sage))" }} />
+          </div>
+          <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>
+            Oops, we lost track
+          </h2>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            We lost track of which property this is for. Please head back to the dashboard and try again.
+          </p>
+          <button
+            onClick={() => navigate("/", { replace: true })}
+            className="w-full inline-flex items-center justify-center gap-2 rounded-[12px] h-11 text-sm font-medium transition-opacity hover:opacity-90"
+            style={{ backgroundColor: "hsl(var(--hygge-sage))", color: "hsl(var(--hygge-sage-foreground))" }}
+          >
+            <Home className="w-4 h-4" />
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const noGas = !data.hasGas;
   const isFlat = data.propertyType === "flat";
@@ -318,7 +339,6 @@ const InductionWizard = () => {
   const progressPercent = Math.round(((currentIdx + 1) / totalSteps) * 100);
 
   /* ─── save to Supabase ─── */
-  const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
     if (!propertyId) {

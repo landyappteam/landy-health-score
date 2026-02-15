@@ -268,6 +268,7 @@ export type Database = {
           eicr: boolean
           epc: boolean
           gas_safety: boolean
+          has_gas_supply: boolean | null
           id: string
           info_statement_version: string | null
           is_decent_homes_compliant: boolean | null
@@ -286,6 +287,7 @@ export type Database = {
           eicr?: boolean
           epc?: boolean
           gas_safety?: boolean
+          has_gas_supply?: boolean | null
           id?: string
           info_statement_version?: string | null
           is_decent_homes_compliant?: boolean | null
@@ -304,6 +306,7 @@ export type Database = {
           eicr?: boolean
           epc?: boolean
           gas_safety?: boolean
+          has_gas_supply?: boolean | null
           id?: string
           info_statement_version?: string | null
           is_decent_homes_compliant?: boolean | null
