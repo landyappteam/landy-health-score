@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -175,6 +175,14 @@ const InductionWizard = () => {
   const propertyId = searchParams.get("propertyId");
   const propertyAddress = searchParams.get("address") || "Property";
   const { toast } = useToast();
+
+  // Redirect to dashboard if no property selected
+  useEffect(() => {
+    if (!propertyId) {
+      toast({ title: "No property selected", description: "Please start an induction from a property card.", variant: "destructive" });
+      navigate("/", { replace: true });
+    }
+  }, [propertyId, navigate, toast]);
   const tier = useUserTier();
   const isPro = tier === "pro";
 
@@ -327,6 +335,22 @@ const InductionWizard = () => {
     setSaving(true);
     const { data: authData } = await supabase.auth.getUser();
     const userId = authData?.user?.id;
+
+    // Validate property still exists before inserting
+    if (userId) {
+      const { data: propCheck, error: propError } = await supabase
+        .from("properties")
+        .select("id")
+        .eq("id", propertyId)
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (propError || !propCheck) {
+        toast({ title: "Property not found", description: "This property may have been deleted. Returning to dashboard.", variant: "destructive" });
+        setSaving(false);
+        navigate("/", { replace: true });
+        return;
+      }
+    }
 
     const payload = {
       property_id: propertyId,
