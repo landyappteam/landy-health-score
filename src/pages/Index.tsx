@@ -11,7 +11,9 @@ import RiskAssessmentCard from "@/components/RiskAssessmentCard";
 import ActionCenter from "@/components/ActionCenter";
 import DocumentScanner from "@/components/DocumentScanner";
 import TenantPackModal from "@/components/TenantPackModal";
+import ProUpsellModal from "@/components/ProUpsellModal";
 import { useProperties } from "@/hooks/useProperties";
+import { useUserTier } from "@/hooks/useUserTier";
 
 const Index = () => {
   const { properties, documents, addProperty, toggleCompliance, toggleNA, removeProperty, healthScore } =
@@ -20,6 +22,9 @@ const Index = () => {
   const [epcModalOpen, setEpcModalOpen] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [packPropertyId, setPackPropertyId] = useState<string | null>(null);
+  const [proModalOpen, setProModalOpen] = useState(false);
+  const { tier } = useUserTier();
+  const isPro = tier === "pro";
 
   const packProperty = packPropertyId ? properties.find((p) => p.id === packPropertyId) : null;
 
@@ -85,11 +90,13 @@ const Index = () => {
                 <PropertyCard
                   key={property.id}
                   property={property}
+                  isPro={isPro}
                   onToggle={toggleCompliance}
                   onToggleNA={toggleNA}
                   onRemove={removeProperty}
-                  onEpcOptimise={() => setEpcModalOpen(true)}
-                  onGeneratePack={(id) => setPackPropertyId(id)}
+                  onEpcOptimise={() => isPro ? setEpcModalOpen(true) : setProModalOpen(true)}
+                  onGeneratePack={(id) => isPro ? setPackPropertyId(id) : setProModalOpen(true)}
+                  onProUpsell={() => setProModalOpen(true)}
                 />
               ))}
             </div>
@@ -124,6 +131,7 @@ const Index = () => {
       </div>
 
       <EpcOptimiserModal open={epcModalOpen} onClose={() => setEpcModalOpen(false)} />
+      <ProUpsellModal open={proModalOpen} onClose={() => setProModalOpen(false)} />
       {scannerOpen && <DocumentScanner onClose={() => setScannerOpen(false)} />}
       {packProperty && (
         <TenantPackModal
