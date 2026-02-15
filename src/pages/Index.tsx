@@ -8,6 +8,7 @@ import PropertyCard from "@/components/PropertyCard";
 import AddPropertyForm from "@/components/AddPropertyForm";
 import EpcOptimiserModal from "@/components/EpcOptimiserModal";
 import RiskAssessmentCard from "@/components/RiskAssessmentCard";
+import ActionCenter from "@/components/ActionCenter";
 import DocumentScanner from "@/components/DocumentScanner";
 import TenantPackModal from "@/components/TenantPackModal";
 import { useProperties } from "@/hooks/useProperties";
@@ -66,9 +67,10 @@ const Index = () => {
 
       {/* Main content */}
       <div className="mx-auto max-w-lg px-4 pb-10">
-        {/* Action Center: Score + Risk grouped */}
-        <section className="py-6 space-y-1">
+        {/* Action Center: Score + Alerts + Risk */}
+        <section className="py-6 space-y-4">
           <ComplianceScore score={healthScore} propertyCount={properties.length} />
+          <ActionCenter properties={properties} />
           <RiskAssessmentCard properties={properties} />
         </section>
 

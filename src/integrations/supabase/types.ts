@@ -222,36 +222,45 @@ export type Database = {
       properties: {
         Row: {
           address: string
+          conversion_date: string | null
           created_at: string
           eicr: boolean
           epc: boolean
           gas_safety: boolean
           id: string
+          is_decent_homes_compliant: boolean | null
           renters_rights_act_2026: boolean
+          tenancy_type: string | null
           tenant_info_statement: boolean
           updated_at: string
           user_id: string
         }
         Insert: {
           address: string
+          conversion_date?: string | null
           created_at?: string
           eicr?: boolean
           epc?: boolean
           gas_safety?: boolean
           id?: string
+          is_decent_homes_compliant?: boolean | null
           renters_rights_act_2026?: boolean
+          tenancy_type?: string | null
           tenant_info_statement?: boolean
           updated_at?: string
           user_id: string
         }
         Update: {
           address?: string
+          conversion_date?: string | null
           created_at?: string
           eicr?: boolean
           epc?: boolean
           gas_safety?: boolean
           id?: string
+          is_decent_homes_compliant?: boolean | null
           renters_rights_act_2026?: boolean
+          tenancy_type?: string | null
           tenant_info_statement?: boolean
           updated_at?: string
           user_id?: string
