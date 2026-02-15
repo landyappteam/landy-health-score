@@ -63,6 +63,11 @@ export default {
           fair: "hsl(var(--score-fair))",
           poor: "hsl(var(--score-poor))",
         },
+        hygge: {
+          cream: "hsl(var(--hygge-cream))",
+          sage: "hsl(var(--hygge-sage))",
+          "sage-foreground": "hsl(var(--hygge-sage-foreground))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

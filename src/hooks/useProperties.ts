@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import type { Property, ComplianceStatus, VaultDocument } from "@/types/property";
+import type { Property, ComplianceStatus, ComplianceNA, VaultDocument } from "@/types/property";
 
 const STORAGE_KEY = "landy-properties";
 const VAULT_KEY = "landy-vault";
@@ -36,6 +36,7 @@ export function useProperties() {
         rentersRightsAct2026: false,
         tenantInfoStatement: false,
       },
+      complianceNA: {},
     };
     setProperties((prev) => [...prev, newProperty]);
   }, []);
@@ -48,6 +49,27 @@ export function useProperties() {
             ? { ...p, compliance: { ...p.compliance, [field]: !p.compliance[field] } }
             : p
         )
+      );
+    },
+    []
+  );
+
+  const toggleNA = useCallback(
+    (propertyId: string, field: keyof ComplianceStatus) => {
+      setProperties((prev) =>
+        prev.map((p) => {
+          if (p.id !== propertyId) return p;
+          const na = p.complianceNA || {};
+          const isNowNA = !na[field];
+          return {
+            ...p,
+            complianceNA: { ...na, [field]: isNowNA },
+            // If marking as N/A, clear the compliance tick
+            compliance: isNowNA
+              ? { ...p.compliance, [field]: false }
+              : p.compliance,
+          };
+        })
       );
     },
     []
@@ -76,13 +98,14 @@ export function useProperties() {
     const total = properties.length * COMPLIANCE_FIELDS;
     const compliant = properties.reduce((sum, p) => {
       const c = p.compliance;
+      const na = p.complianceNA || {};
       return (
         sum +
-        +c.gasSafety +
-        +c.eicr +
-        +c.epc +
-        +c.rentersRightsAct2026 +
-        +c.tenantInfoStatement
+        +(c.gasSafety || !!na.gasSafety) +
+        +(c.eicr || !!na.eicr) +
+        +(c.epc || !!na.epc) +
+        +(c.rentersRightsAct2026 || !!na.rentersRightsAct2026) +
+        +(c.tenantInfoStatement || !!na.tenantInfoStatement)
       );
     }, 0);
     return Math.round((compliant / total) * 100);
@@ -93,6 +116,7 @@ export function useProperties() {
     documents,
     addProperty,
     toggleCompliance,
+    toggleNA,
     removeProperty,
     addDocument,
     removeDocument,
