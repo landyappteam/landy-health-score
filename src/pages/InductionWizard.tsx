@@ -11,6 +11,9 @@ import {
   Flame,
   Zap,
   Droplets,
+  Lock,
+  Download,
+  PartyPopper,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +21,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import SignaturePad from "@/components/SignaturePad";
+import ProUpsellModal from "@/components/ProUpsellModal";
 import { useToast } from "@/hooks/use-toast";
+import { generateHandoverPdf } from "@/lib/generateHandoverPdf";
 import heroImg from "@/assets/welcome-hero.jpg";
 
 interface MeterReading {
@@ -44,6 +49,7 @@ const STEPS = [
   { label: "Meters", icon: Gauge },
   { label: "Safety", icon: FileText },
   { label: "Documents", icon: PenLine },
+  { label: "Completion", icon: PartyPopper },
 ];
 
 const METER_CONFIG = [
@@ -52,14 +58,26 @@ const METER_CONFIG = [
   { key: "water" as const, label: "Water", icon: Droplets },
 ];
 
+// Simulated tier — in production this would come from the profiles table
+const useUserTier = () => {
+  const [tier] = useState<"free" | "pro">(() => {
+    const stored = localStorage.getItem("landy-tier");
+    return stored === "pro" ? "pro" : "free";
+  });
+  return tier;
+};
+
 const InductionWizard = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const propertyId = searchParams.get("propertyId");
   const propertyAddress = searchParams.get("address") || "Property";
   const { toast } = useToast();
+  const tier = useUserTier();
+  const isPro = tier === "pro";
 
   const [step, setStep] = useState(0);
+  const [proModalOpen, setProModalOpen] = useState(false);
   const [data, setData] = useState<InductionData>({
     gas: { reading: "", photoTaken: false },
     electric: { reading: "", photoTaken: false },
@@ -93,7 +111,7 @@ const InductionWizard = () => {
     });
   };
 
-  const handleSubmit = () => {
+  const handleSave = () => {
     const induction = {
       id: crypto.randomUUID(),
       propertyId,
@@ -113,6 +131,21 @@ const InductionWizard = () => {
     });
     navigate("/");
   };
+
+  const handleGeneratePdf = () => {
+    if (!isPro) {
+      setProModalOpen(true);
+      return;
+    }
+    generateHandoverPdf({
+      propertyAddress,
+      ...data,
+      completedAt: new Date().toISOString(),
+    });
+    toast({ title: "PDF generated", description: "Your handover certificate has been downloaded." });
+  };
+
+  const serifFont = { fontFamily: "Georgia, 'Times New Roman', serif" };
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "hsl(var(--hygge-cream))" }}>
@@ -134,7 +167,7 @@ const InductionWizard = () => {
           <div className="absolute bottom-5 left-5 right-5">
             <h1
               className="text-2xl font-semibold text-white tracking-tight"
-              style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
+              style={serifFont}
             >
               Welcome Your New Tenant
             </h1>
@@ -154,9 +187,10 @@ const InductionWizard = () => {
                 <div
                   className="w-full h-1.5 rounded-full transition-colors"
                   style={{
-                    backgroundColor: done || active
-                      ? "hsl(var(--hygge-sage))"
-                      : "hsl(var(--border))",
+                    backgroundColor:
+                      done || active
+                        ? "hsl(var(--hygge-sage))"
+                        : "hsl(var(--border))",
                   }}
                 />
                 <span
@@ -177,16 +211,12 @@ const InductionWizard = () => {
         {/* Step 0: Utility Meters */}
         {step === 0 && (
           <div className="space-y-4">
-            <h2
-              className="text-lg font-semibold text-foreground"
-              style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
-            >
+            <h2 className="text-lg font-semibold text-foreground" style={serifFont}>
               Utility Meters
             </h2>
             <p className="text-sm text-muted-foreground -mt-2">
               Record each meter reading and snap a photo for your records.
             </p>
-
             {METER_CONFIG.map(({ key, label, icon: Icon }) => (
               <div
                 key={key}
@@ -197,23 +227,16 @@ const InductionWizard = () => {
                     className="flex items-center justify-center w-8 h-8 rounded-lg"
                     style={{ backgroundColor: "hsl(var(--hygge-sage) / 0.15)" }}
                   >
-                    <Icon
-                      className="w-4 h-4"
-                      style={{ color: "hsl(var(--hygge-sage))" }}
-                    />
+                    <Icon className="w-4 h-4" style={{ color: "hsl(var(--hygge-sage))" }} />
                   </div>
-                  <span className="text-sm font-semibold text-foreground">
-                    {label}
-                  </span>
+                  <span className="text-sm font-semibold text-foreground">{label}</span>
                 </div>
                 <div className="flex gap-2">
                   <Input
                     type="number"
                     placeholder="Enter reading…"
                     value={data[key].reading}
-                    onChange={(e) =>
-                      updateMeter(key, "reading", e.target.value)
-                    }
+                    onChange={(e) => updateMeter(key, "reading", e.target.value)}
                     className="rounded-xl flex-1"
                   />
                   <Button
@@ -242,49 +265,26 @@ const InductionWizard = () => {
         {/* Step 1: Safety Checks */}
         {step === 1 && (
           <div className="space-y-4">
-            <h2
-              className="text-lg font-semibold text-foreground"
-              style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
-            >
+            <h2 className="text-lg font-semibold text-foreground" style={serifFont}>
               Safety Checks
             </h2>
             <p className="text-sm text-muted-foreground -mt-2">
               Confirm each safety item has been checked on the day of move-in.
             </p>
-
             <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-5">
               {[
-                {
-                  id: "smokeAlarmsTested",
-                  label: "Smoke Alarms Tested (Date of Move-in)",
-                  checked: data.smokeAlarmsTested,
-                },
-                {
-                  id: "carbonMonoxideTested",
-                  label: "Carbon Monoxide Alarms Tested",
-                  checked: data.carbonMonoxideTested,
-                },
-                {
-                  id: "stopcockShown",
-                  label: "Water Stopcock Location Shown",
-                  checked: data.stopcockShown,
-                },
+                { id: "smokeAlarmsTested", label: "Smoke Alarms Tested (Date of Move-in)", checked: data.smokeAlarmsTested },
+                { id: "carbonMonoxideTested", label: "Carbon Monoxide Alarms Tested", checked: data.carbonMonoxideTested },
+                { id: "stopcockShown", label: "Water Stopcock Location Shown", checked: data.stopcockShown },
               ].map(({ id, label, checked }) => (
                 <div key={id} className="flex items-start gap-3">
                   <Checkbox
                     id={id}
                     checked={checked}
-                    onCheckedChange={(v) =>
-                      setData((p) => ({ ...p, [id]: !!v }))
-                    }
+                    onCheckedChange={(v) => setData((p) => ({ ...p, [id]: !!v }))}
                     className="mt-0.5"
                   />
-                  <Label
-                    htmlFor={id}
-                    className="text-sm cursor-pointer leading-snug"
-                  >
-                    {label}
-                  </Label>
+                  <Label htmlFor={id} className="text-sm cursor-pointer leading-snug">{label}</Label>
                 </div>
               ))}
             </div>
@@ -294,66 +294,114 @@ const InductionWizard = () => {
         {/* Step 2: Documents */}
         {step === 2 && (
           <div className="space-y-4">
-            <h2
-              className="text-lg font-semibold text-foreground"
-              style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
-            >
+            <h2 className="text-lg font-semibold text-foreground" style={serifFont}>
               Documents Provided
             </h2>
             <p className="text-sm text-muted-foreground -mt-2">
               Toggle each document the tenant has received.
             </p>
-
             <div className="rounded-2xl border border-border bg-card p-5 shadow-sm divide-y divide-border">
               {[
                 { key: "epcReceived", label: "EPC provided" },
-                {
-                  key: "gasSafetyReceived",
-                  label: "Gas Safety Certificate provided",
-                },
+                { key: "gasSafetyReceived", label: "Gas Safety Certificate provided" },
                 { key: "eicrReceived", label: "EICR provided" },
-                {
-                  key: "govInfoSheetReceived",
-                  label: "2026 Government Information Sheet provided",
-                },
+                { key: "govInfoSheetReceived", label: "2026 Government Information Sheet provided" },
               ].map(({ key, label }) => (
-                <div
-                  key={key}
-                  className="flex items-center justify-between py-3.5 first:pt-0 last:pb-0"
-                >
-                  <Label
-                    htmlFor={key}
-                    className="text-sm cursor-pointer flex-1 pr-4"
-                  >
-                    {label}
-                  </Label>
+                <div key={key} className="flex items-center justify-between py-3.5 first:pt-0 last:pb-0">
+                  <Label htmlFor={key} className="text-sm cursor-pointer flex-1 pr-4">{label}</Label>
                   <Switch
                     id={key}
                     checked={(data as any)[key]}
-                    onCheckedChange={(v) =>
-                      setData((p) => ({ ...p, [key]: v }))
-                    }
+                    onCheckedChange={(v) => setData((p) => ({ ...p, [key]: v }))}
                   />
                 </div>
               ))}
             </div>
+          </div>
+        )}
 
-            {/* Sign-off */}
-            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-3 mt-6">
-              <h3
-                className="text-base font-semibold text-foreground"
-                style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
-              >
-                Tenant Sign-off
+        {/* Step 3: Completion */}
+        {step === 3 && (
+          <div className="space-y-6">
+            <h2 className="text-lg font-semibold text-foreground" style={serifFont}>
+              Completion
+            </h2>
+            <p className="text-sm text-muted-foreground -mt-4">
+              Capture the tenant's signature and generate the handover certificate.
+            </p>
+
+            {/* Signature Pad — Pro gated */}
+            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-3 relative">
+              <h3 className="text-base font-semibold text-foreground" style={serifFont}>
+                Tenant Signature
+              </h3>
+
+              {isPro ? (
+                <>
+                  <p className="text-sm text-muted-foreground">
+                    Ask the tenant to sign below to confirm the walkthrough.
+                  </p>
+                  <SignaturePad
+                    onSignatureChange={(sig) =>
+                      setData((p) => ({ ...p, tenantSignature: sig }))
+                    }
+                  />
+                </>
+              ) : (
+                <>
+                  {/* Blurred signature area */}
+                  <div className="relative">
+                    <div className="blur-[6px] pointer-events-none select-none opacity-60">
+                      <div className="rounded-xl border-2 border-dashed border-border h-40 flex items-center justify-center">
+                        <p className="text-muted-foreground text-sm">Sign here</p>
+                      </div>
+                    </div>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                      <div
+                        className="flex items-center justify-center w-12 h-12 rounded-2xl"
+                        style={{ backgroundColor: "hsl(var(--hygge-sage) / 0.15)" }}
+                      >
+                        <Lock className="w-5 h-5" style={{ color: "hsl(var(--hygge-sage))" }} />
+                      </div>
+                      <p className="text-sm font-medium text-foreground text-center max-w-[240px]">
+                        Digital signatures are a Pro feature
+                      </p>
+                      <button
+                        onClick={() => setProModalOpen(true)}
+                        className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-medium transition-opacity hover:opacity-90"
+                        style={{
+                          backgroundColor: "hsl(var(--hygge-sage))",
+                          color: "hsl(var(--hygge-sage-foreground))",
+                        }}
+                      >
+                        Unlock with Landy Pro
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Generate PDF */}
+            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-3">
+              <h3 className="text-base font-semibold text-foreground" style={serifFont}>
+                Handover Certificate
               </h3>
               <p className="text-sm text-muted-foreground">
-                Ask the tenant to sign below to confirm the walkthrough.
+                Generate a professional PDF with all readings, photos, and the tenant signature.
               </p>
-              <SignaturePad
-                onSignatureChange={(sig) =>
-                  setData((p) => ({ ...p, tenantSignature: sig }))
-                }
-              />
+              <button
+                onClick={handleGeneratePdf}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-xl h-11 text-sm font-medium transition-opacity hover:opacity-90"
+                style={{
+                  backgroundColor: "hsl(var(--hygge-sage))",
+                  color: "hsl(var(--hygge-sage-foreground))",
+                }}
+              >
+                <Download className="w-4 h-4" />
+                Generate Handover Certificate
+                {!isPro && <Lock className="w-3.5 h-3.5 ml-0.5 opacity-70" />}
+              </button>
             </div>
           </div>
         )}
@@ -369,7 +417,7 @@ const InductionWizard = () => {
               <ArrowLeft className="w-4 h-4 mr-1.5" /> Back
             </Button>
           )}
-          {step < 2 ? (
+          {step < 3 ? (
             <button
               className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl h-12 text-sm font-medium transition-opacity hover:opacity-90"
               style={{
@@ -382,19 +430,20 @@ const InductionWizard = () => {
             </button>
           ) : (
             <button
-              className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl h-12 text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl h-12 text-sm font-medium transition-opacity hover:opacity-90"
               style={{
                 backgroundColor: "hsl(var(--hygge-sage))",
                 color: "hsl(var(--hygge-sage-foreground))",
               }}
-              onClick={handleSubmit}
-              disabled={!data.tenantSignature}
+              onClick={handleSave}
             >
-              <Check className="w-4 h-4" /> Complete Walkthrough
+              <Check className="w-4 h-4" /> Save & Finish
             </button>
           )}
         </div>
       </div>
+
+      <ProUpsellModal open={proModalOpen} onClose={() => setProModalOpen(false)} />
     </div>
   );
 };
