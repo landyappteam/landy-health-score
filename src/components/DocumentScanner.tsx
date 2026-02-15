@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Camera, Loader2, X, CheckCircle, AlertCircle } from "lucide-react";
+import { Camera, X, CheckCircle, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ScanResult {
@@ -151,7 +151,7 @@ const DocumentScanner = ({ onClose, onResult }: Props) => {
             >
               {scanning ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="landy-spinner" />
                   Scanning for dates…
                 </>
               ) : (
