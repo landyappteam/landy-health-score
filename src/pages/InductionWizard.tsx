@@ -16,6 +16,7 @@ import {
   PartyPopper,
   AlertCircle,
   ImageIcon,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -614,14 +615,29 @@ const InductionWizard = () => {
               Completion
             </h2>
             <p className="text-sm text-muted-foreground -mt-4">
-              Capture the tenant's signature and generate the handover certificate.
+              {isPro
+                ? "Capture the tenant's signature and generate your signed certificate."
+                : "Your checklist and readings are saved. Upgrade to Pro for digital signatures and certificates."}
             </p>
 
-            {/* Signature Pad — Pro gated */}
+            {/* Signature Pad — Pro only */}
             <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-3 relative">
-              <h3 className="text-base font-semibold text-foreground" style={serifFont}>
-                Tenant Signature
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-semibold text-foreground" style={serifFont}>
+                  Digital Signature
+                </h3>
+                {!isPro && (
+                  <span
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                    style={{
+                      backgroundColor: "hsl(var(--hygge-sage) / 0.15)",
+                      color: "hsl(var(--hygge-sage))",
+                    }}
+                  >
+                    <Sparkles className="w-3 h-3" /> PRO
+                  </span>
+                )}
+              </div>
 
               {isPro ? (
                 <>
@@ -648,8 +664,8 @@ const InductionWizard = () => {
                     >
                       <Lock className="w-5 h-5" style={{ color: "hsl(var(--hygge-sage))" }} />
                     </div>
-                    <p className="text-sm font-medium text-foreground text-center max-w-[240px]">
-                      Digital signatures are a Pro feature
+                    <p className="text-sm font-medium text-foreground text-center max-w-[260px] leading-snug">
+                      A digital signature creates a legally-binding evidence trail
                     </p>
                     <button
                       onClick={() => setProModalOpen(true)}
@@ -666,26 +682,58 @@ const InductionWizard = () => {
               )}
             </div>
 
-            {/* Generate PDF */}
+            {/* Generate Signed Certificate */}
             <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-3">
               <h3 className="text-base font-semibold text-foreground" style={serifFont}>
-                Handover Certificate
+                Signed Certificate
               </h3>
-              <p className="text-sm text-muted-foreground">
-                Generate a professional PDF with all readings, photos, and the tenant signature.
-              </p>
-              <button
-                onClick={handleGeneratePdf}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-xl h-11 text-sm font-medium transition-opacity hover:opacity-90"
-                style={{
-                  backgroundColor: "hsl(var(--hygge-sage))",
-                  color: "hsl(var(--hygge-sage-foreground))",
-                }}
-              >
-                <Download className="w-4 h-4" />
-                Generate Handover Certificate
-                {!isPro && <Lock className="w-3.5 h-3.5 ml-0.5 opacity-70" />}
-              </button>
+              {isPro ? (
+                <>
+                  <p className="text-sm text-muted-foreground">
+                    Generate a timestamped PDF with all meter photos, readings, document confirmations, and the tenant's signature.
+                  </p>
+                  <button
+                    onClick={handleGeneratePdf}
+                    className="w-full inline-flex items-center justify-center gap-2 rounded-xl h-11 text-sm font-medium transition-opacity hover:opacity-90"
+                    style={{
+                      backgroundColor: "hsl(var(--hygge-sage))",
+                      color: "hsl(var(--hygge-sage-foreground))",
+                    }}
+                  >
+                    <Download className="w-4 h-4" />
+                    Generate Signed Certificate
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div
+                    className="rounded-xl p-4 space-y-2"
+                    style={{ backgroundColor: "hsl(var(--hygge-sage) / 0.08)" }}
+                  >
+                    <p className="text-sm text-foreground leading-relaxed">
+                      <span className="font-semibold">Did you know?</span> From 2026,
+                      landlords without proper handover documentation face fines up to{" "}
+                      <span className="font-semibold">£7,000</span>.
+                    </p>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      A signed, timestamped certificate is the simplest way to protect yourself.
+                      Landy Pro generates one in a single tap — with all your photos, readings,
+                      and the tenant's digital signature included.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setProModalOpen(true)}
+                    className="w-full inline-flex items-center justify-center gap-2 rounded-xl h-11 text-sm font-medium transition-opacity hover:opacity-90"
+                    style={{
+                      backgroundColor: "hsl(var(--hygge-sage))",
+                      color: "hsl(var(--hygge-sage-foreground))",
+                    }}
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    Upgrade to unlock certificates
+                  </button>
+                </>
+              )}
             </div>
           </div>
         )}

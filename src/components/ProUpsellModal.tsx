@@ -1,4 +1,4 @@
-import { Lock, Sparkles } from "lucide-react";
+import { Lock, Sparkles, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ProUpsellModalProps {
@@ -20,20 +20,26 @@ const ProUpsellModal = ({ open, onClose }: ProUpsellModalProps) => {
           className="mx-auto flex items-center justify-center w-14 h-14 rounded-2xl"
           style={{ backgroundColor: "hsl(var(--hygge-sage) / 0.15)" }}
         >
-          <Sparkles className="w-7 h-7" style={{ color: "hsl(var(--hygge-sage))" }} />
+          <ShieldCheck className="w-7 h-7" style={{ color: "hsl(var(--hygge-sage))" }} />
         </div>
 
         <h2
           className="text-xl font-semibold text-foreground"
           style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
         >
-          Secure your tenancy
+          Protect yourself from the £7,000 fine
         </h2>
 
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Landy Pro allows tenants to sign digitally, creating a legally-binding
-          evidence trail. Upgrade to generate professional handover certificates
-          with all photos, readings, and signatures.
+          From 2026, landlords without proper documentation face fines up to{" "}
+          <span className="font-semibold text-foreground">£7,000</span>. A signed,
+          timestamped handover certificate is your best evidence that you followed
+          every step.
+        </p>
+
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          Landy Pro gives you digital tenant signatures and professionally generated
+          PDF certificates — your peace of mind in one tap.
         </p>
 
         <div className="space-y-2 pt-2">
