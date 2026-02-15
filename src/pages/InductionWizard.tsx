@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -14,21 +14,27 @@ import {
   Lock,
   Download,
   PartyPopper,
+  AlertCircle,
+  ImageIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+
 import SignaturePad from "@/components/SignaturePad";
 import ProUpsellModal from "@/components/ProUpsellModal";
 import { useToast } from "@/hooks/use-toast";
 import { generateHandoverPdf } from "@/lib/generateHandoverPdf";
+import { supabase } from "@/integrations/supabase/client";
 import heroImg from "@/assets/welcome-hero.jpg";
 
+/* ─── types ─── */
 interface MeterReading {
   reading: string;
-  photoTaken: boolean;
+  photoUrl: string | null;
+  uploading: boolean;
 }
 
 interface InductionData {
@@ -38,13 +44,15 @@ interface InductionData {
   smokeAlarmsTested: boolean;
   carbonMonoxideTested: boolean;
   stopcockShown: boolean;
-  gasSafetyReceived: boolean;
   epcReceived: boolean;
+  gasSafetyReceived: boolean;
   eicrReceived: boolean;
+  howToRentReceived: boolean;
   govInfoSheetReceived: boolean;
   tenantSignature: string | null;
 }
 
+/* ─── constants ─── */
 const STEPS = [
   { label: "Meters", icon: Gauge },
   { label: "Safety", icon: FileText },
@@ -58,7 +66,14 @@ const METER_CONFIG = [
   { key: "water" as const, label: "Water", icon: Droplets },
 ];
 
-// Simulated tier — in production this would come from the profiles table
+const DOC_TOGGLES = [
+  { key: "epcReceived" as const, label: "EPC provided" },
+  { key: "gasSafetyReceived" as const, label: "Gas Safety Certificate provided" },
+  { key: "eicrReceived" as const, label: "EICR provided" },
+  { key: "howToRentReceived" as const, label: "How to Rent 2026 provided" },
+  { key: "govInfoSheetReceived" as const, label: "2026 Government Information Sheet provided" },
+];
+
 const useUserTier = () => {
   const [tier] = useState<"free" | "pro">(() => {
     const stored = localStorage.getItem("landy-tier");
@@ -67,6 +82,7 @@ const useUserTier = () => {
   return tier;
 };
 
+/* ─── component ─── */
 const InductionWizard = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -76,59 +92,135 @@ const InductionWizard = () => {
   const tier = useUserTier();
   const isPro = tier === "pro";
 
+  const fileInputRefs = {
+    gas: useRef<HTMLInputElement>(null),
+    electric: useRef<HTMLInputElement>(null),
+    water: useRef<HTMLInputElement>(null),
+  };
+
   const [step, setStep] = useState(0);
   const [proModalOpen, setProModalOpen] = useState(false);
+  const [validationMsg, setValidationMsg] = useState<string | null>(null);
+
   const [data, setData] = useState<InductionData>({
-    gas: { reading: "", photoTaken: false },
-    electric: { reading: "", photoTaken: false },
-    water: { reading: "", photoTaken: false },
+    gas: { reading: "", photoUrl: null, uploading: false },
+    electric: { reading: "", photoUrl: null, uploading: false },
+    water: { reading: "", photoUrl: null, uploading: false },
     smokeAlarmsTested: false,
     carbonMonoxideTested: false,
     stopcockShown: false,
-    gasSafetyReceived: false,
     epcReceived: false,
+    gasSafetyReceived: false,
     eicrReceived: false,
+    howToRentReceived: false,
     govInfoSheetReceived: false,
     tenantSignature: null,
   });
 
+  /* ─── helpers ─── */
   const updateMeter = (
     meter: "gas" | "electric" | "water",
-    field: keyof MeterReading,
-    value: string | boolean
+    updates: Partial<MeterReading>
   ) => {
     setData((prev) => ({
       ...prev,
-      [meter]: { ...prev[meter], [field]: value },
+      [meter]: { ...prev[meter], ...updates },
     }));
   };
 
-  const handlePhotoStub = (meter: "gas" | "electric" | "water") => {
-    updateMeter(meter, "photoTaken", true);
+  const handlePhotoUpload = async (
+    meter: "gas" | "electric" | "water",
+    file: File
+  ) => {
+    updateMeter(meter, { uploading: true });
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `${propertyId || "unknown"}/${meter}-${Date.now()}.${ext}`;
+
+    const { error } = await supabase.storage
+      .from("meter-photos")
+      .upload(path, file, { upsert: true });
+
+    if (error) {
+      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+      updateMeter(meter, { uploading: false });
+      return;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from("meter-photos")
+      .getPublicUrl(path);
+
+    updateMeter(meter, { photoUrl: urlData.publicUrl, uploading: false });
     toast({
-      title: "Photo captured",
+      title: "Photo uploaded",
       description: `${meter.charAt(0).toUpperCase() + meter.slice(1)} meter photo saved.`,
     });
   };
 
+  const triggerFileInput = (meter: "gas" | "electric" | "water") => {
+    fileInputRefs[meter].current?.click();
+  };
+
+  /* ─── validation ─── */
+  const metersComplete =
+    data.gas.reading.trim() !== "" &&
+    data.electric.reading.trim() !== "" &&
+    data.water.reading.trim() !== "";
+
+  const docsComplete =
+    data.epcReceived &&
+    data.gasSafetyReceived &&
+    data.eicrReceived &&
+    data.howToRentReceived &&
+    data.govInfoSheetReceived;
+
+  const canAdvanceTo = (targetStep: number): boolean => {
+    if (targetStep <= 2) return true; // steps 0-2 always reachable
+    // Step 3 (Completion) requires meters + docs
+    return metersComplete && docsComplete;
+  };
+
+  const handleNext = () => {
+    const target = step + 1;
+    if (!canAdvanceTo(target)) {
+      const missing: string[] = [];
+      if (!metersComplete) missing.push("all meter readings");
+      if (!docsComplete) missing.push("all document toggles");
+      setValidationMsg(`Please complete ${missing.join(" and ")} before proceeding.`);
+      return;
+    }
+    setValidationMsg(null);
+    setStep(target);
+  };
+
+  /* ─── progress ─── */
+  const progressPercent = Math.round(((step + 1) / STEPS.length) * 100);
+
+  /* ─── save ─── */
   const handleSave = () => {
     const induction = {
       id: crypto.randomUUID(),
       propertyId,
-      ...data,
+      gasMeterReading: data.gas.reading,
+      gasMeterPhotoUrl: data.gas.photoUrl,
+      electricMeterReading: data.electric.reading,
+      electricMeterPhotoUrl: data.electric.photoUrl,
+      waterMeterReading: data.water.reading,
+      waterMeterPhotoUrl: data.water.photoUrl,
+      smokeAlarmsTested: data.smokeAlarmsTested,
+      carbonMonoxideTested: data.carbonMonoxideTested,
+      stopcockShown: data.stopcockShown,
+      epcReceived: data.epcReceived,
+      gasSafetyReceived: data.gasSafetyReceived,
+      eicrReceived: data.eicrReceived,
+      howToRentReceived: data.howToRentReceived,
+      govInfoSheetReceived: data.govInfoSheetReceived,
+      tenantSignature: data.tenantSignature,
       completedAt: new Date().toISOString(),
     };
-    const existing = JSON.parse(
-      localStorage.getItem("landy-inductions") || "[]"
-    );
-    localStorage.setItem(
-      "landy-inductions",
-      JSON.stringify([...existing, induction])
-    );
-    toast({
-      title: "Induction complete ✓",
-      description: "All details have been saved.",
-    });
+    const existing = JSON.parse(localStorage.getItem("landy-inductions") || "[]");
+    localStorage.setItem("landy-inductions", JSON.stringify([...existing, induction]));
+    toast({ title: "Induction complete ✓", description: "All details have been saved." });
     navigate("/");
   };
 
@@ -139,7 +231,17 @@ const InductionWizard = () => {
     }
     generateHandoverPdf({
       propertyAddress,
-      ...data,
+      gas: { reading: data.gas.reading, photoTaken: !!data.gas.photoUrl },
+      electric: { reading: data.electric.reading, photoTaken: !!data.electric.photoUrl },
+      water: { reading: data.water.reading, photoTaken: !!data.water.photoUrl },
+      smokeAlarmsTested: data.smokeAlarmsTested,
+      carbonMonoxideTested: data.carbonMonoxideTested,
+      stopcockShown: data.stopcockShown,
+      gasSafetyReceived: data.gasSafetyReceived,
+      epcReceived: data.epcReceived,
+      eicrReceived: data.eicrReceived,
+      govInfoSheetReceived: data.govInfoSheetReceived,
+      tenantSignature: data.tenantSignature,
       completedAt: new Date().toISOString(),
     });
     toast({ title: "PDF generated", description: "Your handover certificate has been downloaded." });
@@ -151,7 +253,7 @@ const InductionWizard = () => {
     <div className="min-h-screen" style={{ backgroundColor: "hsl(var(--hygge-cream))" }}>
       <div className="mx-auto max-w-lg px-4 pb-12">
         {/* Hero */}
-        <div className="relative -mx-4 mb-8">
+        <div className="relative -mx-4 mb-2">
           <img
             src={heroImg}
             alt="A key resting on a wooden table"
@@ -165,19 +267,38 @@ const InductionWizard = () => {
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div className="absolute bottom-5 left-5 right-5">
-            <h1
-              className="text-2xl font-semibold text-white tracking-tight"
-              style={serifFont}
-            >
+            <h1 className="text-2xl font-semibold text-white tracking-tight" style={serifFont}>
               Welcome Your New Tenant
             </h1>
-            <p className="text-white/80 text-sm mt-0.5 truncate">
-              {propertyAddress}
-            </p>
+            <p className="text-white/80 text-sm mt-0.5 truncate">{propertyAddress}</p>
           </div>
         </div>
 
-        {/* Step indicator */}
+        {/* Hygge Progress Bar */}
+        <div className="px-1 mb-6">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs font-medium text-muted-foreground">
+              Step {step + 1} of {STEPS.length} — {STEPS[step].label}
+            </span>
+            <span
+              className="text-xs font-semibold"
+              style={{ color: "hsl(var(--hygge-sage))" }}
+            >
+              {progressPercent}%
+            </span>
+          </div>
+          <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: "hsl(var(--border))" }}>
+            <div
+              className="h-full rounded-full transition-all duration-500 ease-out"
+              style={{
+                width: `${progressPercent}%`,
+                backgroundColor: "hsl(var(--hygge-sage))",
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Step labels */}
         <div className="flex items-center gap-1 mb-8 px-1">
           {STEPS.map((s, i) => {
             const active = i === step;
@@ -185,20 +306,16 @@ const InductionWizard = () => {
             return (
               <div key={s.label} className="flex-1 flex flex-col items-center gap-1.5">
                 <div
-                  className="w-full h-1.5 rounded-full transition-colors"
+                  className="w-full h-1 rounded-full transition-colors"
                   style={{
                     backgroundColor:
-                      done || active
-                        ? "hsl(var(--hygge-sage))"
-                        : "hsl(var(--border))",
+                      done || active ? "hsl(var(--hygge-sage))" : "hsl(var(--border))",
                   }}
                 />
                 <span
                   className="text-[11px] font-medium"
                   style={{
-                    color: active
-                      ? "hsl(var(--foreground))"
-                      : "hsl(var(--muted-foreground))",
+                    color: active ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))",
                   }}
                 >
                   {s.label}
@@ -208,7 +325,15 @@ const InductionWizard = () => {
           })}
         </div>
 
-        {/* Step 0: Utility Meters */}
+        {/* Validation message */}
+        {validationMsg && (
+          <div className="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-3 mb-5">
+            <AlertCircle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
+            <p className="text-sm text-destructive">{validationMsg}</p>
+          </div>
+        )}
+
+        {/* ─── Step 0: Utility Meters ─── */}
         {step === 0 && (
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-foreground" style={serifFont}>
@@ -231,19 +356,32 @@ const InductionWizard = () => {
                   </div>
                   <span className="text-sm font-semibold text-foreground">{label}</span>
                 </div>
+
                 <div className="flex gap-2">
                   <Input
                     type="number"
                     placeholder="Enter reading…"
                     value={data[key].reading}
-                    onChange={(e) => updateMeter(key, "reading", e.target.value)}
+                    onChange={(e) => updateMeter(key, { reading: e.target.value })}
                     className="rounded-xl flex-1"
+                  />
+                  {/* Hidden file input */}
+                  <input
+                    ref={fileInputRefs[key]}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handlePhotoUpload(key, file);
+                    }}
                   />
                   <Button
                     variant="outline"
                     className="rounded-xl gap-1.5 shrink-0"
                     style={
-                      data[key].photoTaken
+                      data[key].photoUrl
                         ? {
                             backgroundColor: "hsl(var(--hygge-sage))",
                             color: "hsl(var(--hygge-sage-foreground))",
@@ -251,18 +389,42 @@ const InductionWizard = () => {
                           }
                         : {}
                     }
-                    onClick={() => handlePhotoStub(key)}
+                    disabled={data[key].uploading}
+                    onClick={() => triggerFileInput(key)}
                   >
-                    <Camera className="w-4 h-4" />
-                    {data[key].photoTaken ? "Done" : "Add Photo"}
+                    {data[key].uploading ? (
+                      <span className="landy-spinner" />
+                    ) : (
+                      <Camera className="w-4 h-4" />
+                    )}
+                    {data[key].photoUrl
+                      ? "Done"
+                      : data[key].uploading
+                      ? "Uploading…"
+                      : "Add Photo"}
                   </Button>
                 </div>
+
+                {/* Photo preview thumbnail */}
+                {data[key].photoUrl && (
+                  <div className="flex items-center gap-2">
+                    <ImageIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                    <a
+                      href={data[key].photoUrl!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-primary underline underline-offset-2 truncate"
+                    >
+                      View uploaded photo
+                    </a>
+                  </div>
+                )}
               </div>
             ))}
           </div>
         )}
 
-        {/* Step 1: Safety Checks */}
+        {/* ─── Step 1: Safety Checks ─── */}
         {step === 1 && (
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-foreground" style={serifFont}>
@@ -273,25 +435,27 @@ const InductionWizard = () => {
             </p>
             <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-5">
               {[
-                { id: "smokeAlarmsTested", label: "Smoke Alarms Tested (Date of Move-in)", checked: data.smokeAlarmsTested },
-                { id: "carbonMonoxideTested", label: "Carbon Monoxide Alarms Tested", checked: data.carbonMonoxideTested },
-                { id: "stopcockShown", label: "Water Stopcock Location Shown", checked: data.stopcockShown },
-              ].map(({ id, label, checked }) => (
+                { id: "smokeAlarmsTested" as const, label: "Smoke Alarms Tested (Date of Move-in)" },
+                { id: "carbonMonoxideTested" as const, label: "Carbon Monoxide Alarms Tested" },
+                { id: "stopcockShown" as const, label: "Water Stopcock Location Shown" },
+              ].map(({ id, label }) => (
                 <div key={id} className="flex items-start gap-3">
                   <Checkbox
                     id={id}
-                    checked={checked}
+                    checked={data[id]}
                     onCheckedChange={(v) => setData((p) => ({ ...p, [id]: !!v }))}
                     className="mt-0.5"
                   />
-                  <Label htmlFor={id} className="text-sm cursor-pointer leading-snug">{label}</Label>
+                  <Label htmlFor={id} className="text-sm cursor-pointer leading-snug">
+                    {label}
+                  </Label>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* Step 2: Documents */}
+        {/* ─── Step 2: Documents ─── */}
         {step === 2 && (
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-foreground" style={serifFont}>
@@ -301,26 +465,33 @@ const InductionWizard = () => {
               Toggle each document the tenant has received.
             </p>
             <div className="rounded-2xl border border-border bg-card p-5 shadow-sm divide-y divide-border">
-              {[
-                { key: "epcReceived", label: "EPC provided" },
-                { key: "gasSafetyReceived", label: "Gas Safety Certificate provided" },
-                { key: "eicrReceived", label: "EICR provided" },
-                { key: "govInfoSheetReceived", label: "2026 Government Information Sheet provided" },
-              ].map(({ key, label }) => (
-                <div key={key} className="flex items-center justify-between py-3.5 first:pt-0 last:pb-0">
-                  <Label htmlFor={key} className="text-sm cursor-pointer flex-1 pr-4">{label}</Label>
+              {DOC_TOGGLES.map(({ key, label }) => (
+                <div
+                  key={key}
+                  className="flex items-center justify-between py-3.5 first:pt-0 last:pb-0"
+                >
+                  <Label htmlFor={key} className="text-sm cursor-pointer flex-1 pr-4">
+                    {label}
+                  </Label>
                   <Switch
                     id={key}
-                    checked={(data as any)[key]}
+                    checked={data[key]}
                     onCheckedChange={(v) => setData((p) => ({ ...p, [key]: v }))}
                   />
                 </div>
               ))}
             </div>
+
+            {/* Inline validation hint */}
+            {!docsComplete && (
+              <p className="text-xs text-muted-foreground italic px-1">
+                All documents must be toggled on before you can proceed to Completion.
+              </p>
+            )}
           </div>
         )}
 
-        {/* Step 3: Completion */}
+        {/* ─── Step 3: Completion ─── */}
         {step === 3 && (
           <div className="space-y-6">
             <h2 className="text-lg font-semibold text-foreground" style={serifFont}>
@@ -348,37 +519,34 @@ const InductionWizard = () => {
                   />
                 </>
               ) : (
-                <>
-                  {/* Blurred signature area */}
-                  <div className="relative">
-                    <div className="blur-[6px] pointer-events-none select-none opacity-60">
-                      <div className="rounded-xl border-2 border-dashed border-border h-40 flex items-center justify-center">
-                        <p className="text-muted-foreground text-sm">Sign here</p>
-                      </div>
-                    </div>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                      <div
-                        className="flex items-center justify-center w-12 h-12 rounded-2xl"
-                        style={{ backgroundColor: "hsl(var(--hygge-sage) / 0.15)" }}
-                      >
-                        <Lock className="w-5 h-5" style={{ color: "hsl(var(--hygge-sage))" }} />
-                      </div>
-                      <p className="text-sm font-medium text-foreground text-center max-w-[240px]">
-                        Digital signatures are a Pro feature
-                      </p>
-                      <button
-                        onClick={() => setProModalOpen(true)}
-                        className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-medium transition-opacity hover:opacity-90"
-                        style={{
-                          backgroundColor: "hsl(var(--hygge-sage))",
-                          color: "hsl(var(--hygge-sage-foreground))",
-                        }}
-                      >
-                        Unlock with Landy Pro
-                      </button>
+                <div className="relative">
+                  <div className="blur-[6px] pointer-events-none select-none opacity-60">
+                    <div className="rounded-xl border-2 border-dashed border-border h-40 flex items-center justify-center">
+                      <p className="text-muted-foreground text-sm">Sign here</p>
                     </div>
                   </div>
-                </>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                    <div
+                      className="flex items-center justify-center w-12 h-12 rounded-2xl"
+                      style={{ backgroundColor: "hsl(var(--hygge-sage) / 0.15)" }}
+                    >
+                      <Lock className="w-5 h-5" style={{ color: "hsl(var(--hygge-sage))" }} />
+                    </div>
+                    <p className="text-sm font-medium text-foreground text-center max-w-[240px]">
+                      Digital signatures are a Pro feature
+                    </p>
+                    <button
+                      onClick={() => setProModalOpen(true)}
+                      className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-medium transition-opacity hover:opacity-90"
+                      style={{
+                        backgroundColor: "hsl(var(--hygge-sage))",
+                        color: "hsl(var(--hygge-sage-foreground))",
+                      }}
+                    >
+                      Unlock with Landy Pro
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
 
@@ -406,13 +574,16 @@ const InductionWizard = () => {
           </div>
         )}
 
-        {/* Navigation */}
+        {/* ─── Navigation ─── */}
         <div className="flex gap-3 mt-8">
           {step > 0 && (
             <Button
               variant="outline"
               className="flex-1 rounded-xl h-12"
-              onClick={() => setStep((s) => s - 1)}
+              onClick={() => {
+                setValidationMsg(null);
+                setStep((s) => s - 1);
+              }}
             >
               <ArrowLeft className="w-4 h-4 mr-1.5" /> Back
             </Button>
@@ -424,7 +595,7 @@ const InductionWizard = () => {
                 backgroundColor: "hsl(var(--hygge-sage))",
                 color: "hsl(var(--hygge-sage-foreground))",
               }}
-              onClick={() => setStep((s) => s + 1)}
+              onClick={handleNext}
             >
               Next <ArrowRight className="w-4 h-4" />
             </button>
