@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Home, FolderOpen, Camera } from "lucide-react";
+import { Home, FolderOpen, Camera, ClipboardList } from "lucide-react";
 import emptyStateImg from "@/assets/empty-state-home.png";
 import { Link } from "react-router-dom";
 import ComplianceScore from "@/components/ComplianceScore";
@@ -54,6 +54,19 @@ const Index = () => {
 
         {/* Risk Assessment */}
         <RiskAssessmentCard properties={properties} />
+
+        {/* Start Induction */}
+        {properties.length > 0 && (
+          <div className="mb-5">
+            <Link
+              to={`/induction?propertyId=${properties[0].id}&address=${encodeURIComponent(properties[0].address)}`}
+              className="flex items-center justify-center gap-2 w-full rounded-xl bg-primary/10 text-primary px-4 py-3 text-sm font-medium hover:bg-primary/15 transition-colors"
+            >
+              <ClipboardList className="w-4 h-4" />
+              Start New Tenant Induction
+            </Link>
+          </div>
+        )}
 
         {/* Add Property */}
         <div className="mb-5">
