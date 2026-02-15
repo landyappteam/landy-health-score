@@ -58,10 +58,17 @@ interface MeterReading {
 interface InductionData {
   propertyType: PropertyType;
   hasGas: boolean;
+  hasOil: boolean;
   gas: MeterReading;
   electric: MeterReading;
   water: MeterReading;
   waterNA: boolean;
+  // Oil heating
+  oilLevel: string;
+  oilTankNoCracks: boolean;
+  oilBaseStable: boolean;
+  oilPhotoUrl: string | null;
+  oilPhotoUploading: boolean;
   // Section N/A flags
   utilityNA: boolean;
   legalNA: boolean;
@@ -125,14 +132,14 @@ const NALink = ({
 const SectionCard = ({
   title,
   icon: Icon,
-  naActive,
+  naActive = false,
   onToggleNA,
   children,
 }: {
   title: string;
   icon: React.ElementType;
-  naActive: boolean;
-  onToggleNA: () => void;
+  naActive?: boolean;
+  onToggleNA?: () => void;
   children: React.ReactNode;
 }) => (
   <div
@@ -149,7 +156,7 @@ const SectionCard = ({
         </div>
         <span className="text-sm font-semibold text-foreground">{title}</span>
       </div>
-      <NALink active={naActive} onToggle={onToggleNA} />
+      {onToggleNA && <NALink active={naActive} onToggle={onToggleNA} />}
     </div>
     {naActive ? (
       <p className="text-xs text-muted-foreground italic">
@@ -176,6 +183,7 @@ const InductionWizard = () => {
     electric: useRef<HTMLInputElement>(null),
     water: useRef<HTMLInputElement>(null),
     alarmTest: useRef<HTMLInputElement>(null),
+    oilTank: useRef<HTMLInputElement>(null),
   };
 
   const [step, setStep] = useState(0);
@@ -186,10 +194,16 @@ const InductionWizard = () => {
   const [data, setData] = useState<InductionData>({
     propertyType: null,
     hasGas: true,
+    hasOil: false,
     gas: { reading: "", photoUrl: null, uploading: false },
     electric: { reading: "", photoUrl: null, uploading: false },
     water: { reading: "", photoUrl: null, uploading: false },
     waterNA: false,
+    oilLevel: "",
+    oilTankNoCracks: false,
+    oilBaseStable: false,
+    oilPhotoUrl: null,
+    oilPhotoUploading: false,
     utilityNA: false,
     legalNA: false,
     buildingNA: false,
@@ -245,7 +259,8 @@ const InductionWizard = () => {
     );
   }
 
-  const noGas = !data.hasGas;
+  const noGas = !data.hasGas || data.hasOil;
+  const hasOil = data.hasOil;
   const isFlat = data.propertyType === "flat";
   const isHmo = data.propertyType === "hmo";
   const showBuilding = isFlat || isHmo;
@@ -285,7 +300,22 @@ const InductionWizard = () => {
     toast({ title: "Photo uploaded", description: "Alarm test photo saved." });
   };
 
-  const triggerFileInput = (key: "gas" | "electric" | "water" | "alarmTest") => {
+  const handleOilPhotoUpload = async (file: File) => {
+    setData((p) => ({ ...p, oilPhotoUploading: true }));
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `${propertyId || "unknown"}/oil-tank-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("meter-photos").upload(path, file, { upsert: true });
+    if (error) {
+      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+      setData((p) => ({ ...p, oilPhotoUploading: false }));
+      return;
+    }
+    const { data: urlData } = supabase.storage.from("meter-photos").getPublicUrl(path);
+    setData((p) => ({ ...p, oilPhotoUrl: urlData.publicUrl, oilPhotoUploading: false }));
+    toast({ title: "Photo uploaded", description: "Oil tank photo saved." });
+  };
+
+  const triggerFileInput = (key: "gas" | "electric" | "water" | "alarmTest" | "oilTank") => {
     fileInputRefs[key].current?.click();
   };
 
@@ -447,11 +477,17 @@ const InductionWizard = () => {
   /* ─── summary data ─── */
   const summaryItems = [
     { label: "Property Type", value: data.propertyType ? data.propertyType.toUpperCase() : "—", na: false },
-    { label: "Has Gas Supply", value: data.hasGas ? "Yes" : "No", na: false },
+    { label: "Heating", value: data.hasGas ? "Gas" : hasOil ? "Oil" : "Electric Only", na: false },
     { label: "Utility Evidence", value: data.utilityNA ? "N/A" : "Completed", na: data.utilityNA },
     ...(noGas ? [] : [{ label: "Gas Reading", value: data.utilityNA ? "N/A" : (data.gas.reading || "—"), na: data.utilityNA }]),
     { label: "Electric Reading", value: data.utilityNA ? "N/A" : (data.electric.reading || "—"), na: data.utilityNA },
     { label: "Water Reading", value: data.utilityNA || data.waterNA ? "N/A" : (data.water.reading || "—"), na: data.utilityNA || data.waterNA },
+    ...(hasOil ? [
+      { label: "Oil Level", value: data.utilityNA ? "N/A" : (data.oilLevel || "—"), na: data.utilityNA },
+      { label: "Tank — No Cracks", value: data.oilTankNoCracks ? "✓" : "✗", na: false },
+      { label: "Tank Base Stable", value: data.oilBaseStable ? "✓" : "✗", na: false },
+      { label: "Oil Tank Photo", value: data.oilPhotoUrl ? "✓" : "✗", na: false },
+    ] : []),
     { label: "Legal Paperwork", value: data.legalNA ? "N/A" : "Completed", na: data.legalNA },
     ...(data.legalNA ? [] : [
       { label: "How to Rent Guide", value: data.howToRentReceived ? "✓" : "✗", na: false },
@@ -591,23 +627,44 @@ const InductionWizard = () => {
               </div>
             </div>
 
-            {/* Gas supply toggle */}
-            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-lg"
-                    style={{ backgroundColor: "hsl(var(--hygge-sage) / 0.15)" }}>
-                    <Flame className="w-4 h-4" style={{ color: "hsl(var(--hygge-sage))" }} />
-                  </div>
-                  <div>
-                    <span className="text-sm font-semibold text-foreground">Does this property have gas?</span>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {noGas ? "Gas sections will be hidden throughout." : "Gas meter, safety cert & CO checks included."}
-                    </p>
-                  </div>
-                </div>
-                <Switch checked={data.hasGas} onCheckedChange={(v) => setData((p) => ({ ...p, hasGas: v }))} />
+            {/* Heating type — Gas vs Oil */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Heating Type</Label>
+              <div className="grid grid-cols-2 gap-3">
+                {([
+                  { key: "gas" as const, label: "Gas", icon: Flame },
+                  { key: "oil" as const, label: "Oil", icon: Droplet },
+                ]).map(({ key, label, icon: HIcon }) => {
+                  const selected = key === "gas" ? data.hasGas && !data.hasOil : data.hasOil;
+                  return (
+                    <button key={key} onClick={() => {
+                      if (key === "gas") setData((p) => ({ ...p, hasGas: true, hasOil: false }));
+                      else setData((p) => ({ ...p, hasGas: false, hasOil: true }));
+                    }}
+                      className="flex flex-col items-center gap-2 rounded-[12px] border-2 p-4 transition-all"
+                      style={{
+                        borderColor: selected ? "hsl(var(--hygge-sage))" : "hsl(var(--border))",
+                        backgroundColor: selected ? "hsl(var(--hygge-sage) / 0.08)" : "hsl(var(--card))",
+                      }}>
+                      <div className="flex items-center justify-center w-9 h-9 rounded-lg"
+                        style={{ backgroundColor: selected ? "hsl(var(--hygge-sage) / 0.2)" : "hsl(var(--hygge-sage) / 0.1)" }}>
+                        <HIcon className="w-4 h-4" style={{ color: selected ? "hsl(var(--hygge-sage))" : "hsl(var(--muted-foreground))" }} />
+                      </div>
+                      <span className="text-sm font-semibold" style={{ color: selected ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))" }}>
+                        {label}
+                      </span>
+                      {selected && <Check className="w-4 h-4" style={{ color: "hsl(var(--hygge-sage))" }} />}
+                    </button>
+                  );
+                })}
               </div>
+              {/* Neither gas nor oil option */}
+              <button
+                onClick={() => setData((p) => ({ ...p, hasGas: false, hasOil: false }))}
+                className="w-full text-xs text-muted-foreground hover:text-foreground underline mt-1 text-center"
+              >
+                No gas or oil — electric only
+              </button>
             </div>
           </div>
         )}
@@ -646,6 +703,63 @@ const InductionWizard = () => {
               </div>
               {fileInputElements}
             </SectionCard>
+
+            {/* Oil Heating Evidence */}
+            {hasOil && !data.utilityNA && (
+              <SectionCard title="Oil Heating Evidence" icon={Droplet}>
+                <div className="space-y-4">
+                  <MeterCardInput
+                    meterKey="oil" label="Oil Level (%)" icon={Droplet}
+                    reading={data.oilLevel} photoUrl={null} uploading={false}
+                    onReadingChange={(v) => setData((p) => ({ ...p, oilLevel: v }))}
+                    onTriggerPhoto={() => {}}
+                  />
+
+                  <div className="flex items-start gap-3">
+                    <Checkbox id="oilTankNoCracks" checked={data.oilTankNoCracks}
+                      onCheckedChange={(v) => setData((p) => ({ ...p, oilTankNoCracks: !!v }))} className="mt-0.5" />
+                    <Label htmlFor="oilTankNoCracks" className="text-sm cursor-pointer leading-snug">
+                      No visible cracks or leaks on tank
+                    </Label>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <Checkbox id="oilBaseStable" checked={data.oilBaseStable}
+                      onCheckedChange={(v) => setData((p) => ({ ...p, oilBaseStable: !!v }))} className="mt-0.5" />
+                    <Label htmlFor="oilBaseStable" className="text-sm cursor-pointer leading-snug">
+                      Tank base is level and non-combustible
+                    </Label>
+                  </div>
+
+                  {/* Oil tank photo */}
+                  <div>
+                    <input ref={fileInputRefs.oilTank} type="file" accept="image/*" capture="environment" className="hidden"
+                      onChange={(e) => { const file = e.target.files?.[0]; if (file) handleOilPhotoUpload(file); }} />
+                    <Button variant="outline" className="w-full rounded-[12px] gap-2"
+                      style={data.oilPhotoUrl ? { backgroundColor: "hsl(var(--hygge-sage))", color: "hsl(var(--hygge-sage-foreground))", borderColor: "hsl(var(--hygge-sage))" } : {}}
+                      disabled={data.oilPhotoUploading} onClick={() => triggerFileInput("oilTank")}>
+                      {data.oilPhotoUploading ? <span className="landy-spinner" /> : <Camera className="w-4 h-4" />}
+                      {data.oilPhotoUrl ? "Oil Tank Photo ✓" : data.oilPhotoUploading ? "Uploading…" : "Photo of Oil Tank & Lines"}
+                    </Button>
+                  </div>
+
+                  {/* OFTEC tip */}
+                  <div className="rounded-[12px] p-4" style={{ backgroundColor: "hsl(var(--hygge-sage) / 0.08)", border: "1px solid hsl(var(--hygge-sage) / 0.2)" }}>
+                    <div className="flex items-start gap-2.5">
+                      <Sparkles className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "hsl(var(--hygge-sage))" }} />
+                      <div>
+                        <p className="text-sm font-semibold text-foreground" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>
+                          Pro Recommendation
+                        </p>
+                        <p className="text-xs text-muted-foreground leading-relaxed mt-1">
+                          While an Oil Cert isn't legally mandatory, an annual OFTEC inspection is recommended to prevent environmental fines of up to <span className="font-semibold text-foreground">£20,000</span>.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </SectionCard>
+            )}
           </div>
         )}
 
