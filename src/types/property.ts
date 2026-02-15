@@ -6,10 +6,13 @@ export interface ComplianceStatus {
   tenantInfoStatement: boolean;
 }
 
+export type ComplianceNA = Partial<Record<keyof ComplianceStatus, boolean>>;
+
 export interface Property {
   id: string;
   address: string;
   compliance: ComplianceStatus;
+  complianceNA?: ComplianceNA;
 }
 
 export interface VaultDocument {

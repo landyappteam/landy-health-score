@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Home, FolderOpen, Camera, ClipboardList, LogOut } from "lucide-react";
+import { Home, FolderOpen, Camera, LogOut } from "lucide-react";
 import emptyStateImg from "@/assets/empty-state-home.png";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,7 +13,7 @@ import TenantPackModal from "@/components/TenantPackModal";
 import { useProperties } from "@/hooks/useProperties";
 
 const Index = () => {
-  const { properties, documents, addProperty, toggleCompliance, removeProperty, healthScore } =
+  const { properties, documents, addProperty, toggleCompliance, toggleNA, removeProperty, healthScore } =
     useProperties();
   const { signOut } = useAuth();
   const [epcModalOpen, setEpcModalOpen] = useState(false);
@@ -64,28 +64,18 @@ const Index = () => {
         {/* Risk Assessment */}
         <RiskAssessmentCard properties={properties} />
 
-        {/* Start Induction */}
-        {properties.length > 0 && (
-          <div className="mb-5">
-            <Link
-              to={`/induction?propertyId=${properties[0].id}&address=${encodeURIComponent(properties[0].address)}`}
-              className="flex items-center justify-center gap-2 w-full rounded-xl bg-primary/10 text-primary px-4 py-3 text-sm font-medium hover:bg-primary/15 transition-colors"
-            >
-              <ClipboardList className="w-4 h-4" />
-              Start New Tenant Induction
-            </Link>
-          </div>
-        )}
-
-        {/* Add Property */}
-        <div className="mb-5">
+        {/* Add Property – cream card */}
+        <div className="mb-5 rounded-2xl border border-border bg-hygge-cream p-4 shadow-sm">
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+            Add Property
+          </h2>
           <AddPropertyForm onAdd={addProperty} />
         </div>
 
         {/* Properties List */}
         {properties.length > 0 && (
-          <div className="space-y-3">
-            <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+          <div className="space-y-4">
+            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               Your Properties
             </h2>
             {properties.map((property) => (
@@ -93,6 +83,7 @@ const Index = () => {
                 key={property.id}
                 property={property}
                 onToggle={toggleCompliance}
+                onToggleNA={toggleNA}
                 onRemove={removeProperty}
                 onEpcOptimise={() => setEpcModalOpen(true)}
                 onGeneratePack={(id) => setPackPropertyId(id)}
