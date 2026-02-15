@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
 interface MeterCardInputProps {
-  meterKey: "gas" | "electric" | "water";
+  meterKey: "gas" | "electric" | "water" | "oil";
   label: string;
   icon: React.ElementType;
   reading: string;
