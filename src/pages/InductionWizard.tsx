@@ -38,6 +38,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
 import SignaturePad from "@/components/SignaturePad";
+import MeterCardInput from "@/components/MeterCardInput";
 import ProUpsellModal from "@/components/ProUpsellModal";
 import { useToast } from "@/hooks/use-toast";
 import { generateHandoverPdf } from "@/lib/generateHandoverPdf";
@@ -439,54 +440,15 @@ const InductionWizard = () => {
     ] : []),
   ];
 
-  /* ─── meter card renderer (stable — not a nested component) ─── */
-  const renderMeterCard = (meterKey: "gas" | "electric" | "water", label: string, Icon: React.ElementType) => {
-    const isWaterNA = meterKey === "water" && data.waterNA;
-    return (
-      <div key={meterKey} className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Icon className="w-4 h-4" style={{ color: "hsl(var(--hygge-sage))" }} />
-            <span className="text-sm font-medium text-foreground">{label}</span>
-          </div>
-          {meterKey === "water" && (
-            <div className="flex items-center gap-2">
-              <Label htmlFor="water-na" className="text-xs text-muted-foreground cursor-pointer">N/A</Label>
-              <Switch id="water-na" checked={data.waterNA} onCheckedChange={(v) => setData((p) => ({ ...p, waterNA: v }))} />
-            </div>
-          )}
-        </div>
-        {isWaterNA ? (
-          <p className="text-xs text-muted-foreground italic">Water meter not applicable.</p>
-        ) : (
-          <div className="flex gap-2">
-            <Input
-              type="number"
-              placeholder="Enter reading…"
-              value={data[meterKey].reading}
-              onChange={(e) => updateMeter(meterKey, { reading: e.target.value })}
-              className="rounded-xl flex-1"
-            />
-            <input ref={fileInputRefs[meterKey]} type="file" accept="image/*" capture="environment" className="hidden"
-              onChange={(e) => { const file = e.target.files?.[0]; if (file) handlePhotoUpload(meterKey, file); }} />
-            <Button variant="outline" className="rounded-xl gap-1.5 shrink-0"
-              style={data[meterKey].photoUrl ? { backgroundColor: "hsl(var(--hygge-sage))", color: "hsl(var(--hygge-sage-foreground))", borderColor: "hsl(var(--hygge-sage))" } : {}}
-              disabled={data[meterKey].uploading} onClick={() => triggerFileInput(meterKey)}>
-              {data[meterKey].uploading ? <span className="landy-spinner" /> : <Camera className="w-4 h-4" />}
-              {data[meterKey].photoUrl ? "Done ✓" : data[meterKey].uploading ? "Uploading…" : "Photo"}
-            </Button>
-          </div>
-        )}
-        {!isWaterNA && data[meterKey].photoUrl && (
-          <div className="flex items-center gap-2">
-            <ImageIcon className="w-3.5 h-3.5 text-muted-foreground" />
-            <a href={data[meterKey].photoUrl!} target="_blank" rel="noopener noreferrer"
-              className="text-xs text-primary underline underline-offset-2 truncate">View photo</a>
-          </div>
-        )}
-      </div>
-    );
-  };
+  /* ─── hidden file inputs (stable refs) ─── */
+  const fileInputElements = (
+    <>
+      {(["gas", "electric", "water"] as const).map((key) => (
+        <input key={key} ref={fileInputRefs[key]} type="file" accept="image/*" capture="environment" className="hidden"
+          onChange={(e) => { const file = e.target.files?.[0]; if (file) handlePhotoUpload(key, file); }} />
+      ))}
+    </>
+  );
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "hsl(var(--hygge-cream))" }}>
@@ -619,10 +581,30 @@ const InductionWizard = () => {
             <SectionCard title="Meter Readings & Photos" icon={Gauge}
               naActive={data.utilityNA} onToggleNA={() => setData((p) => ({ ...p, utilityNA: !p.utilityNA }))}>
               <div className="space-y-5">
-                {!noGas && renderMeterCard("gas", "Gas", Flame)}
-                {renderMeterCard("electric", "Electric", Zap)}
-                {renderMeterCard("water", "Water", Droplets)}
+                {!noGas && (
+                  <MeterCardInput
+                    meterKey="gas" label="Gas" icon={Flame}
+                    reading={data.gas.reading} photoUrl={data.gas.photoUrl} uploading={data.gas.uploading}
+                    onReadingChange={(v) => updateMeter("gas", { reading: v })}
+                    onTriggerPhoto={() => triggerFileInput("gas")}
+                  />
+                )}
+                <MeterCardInput
+                  meterKey="electric" label="Electric" icon={Zap}
+                  reading={data.electric.reading} photoUrl={data.electric.photoUrl} uploading={data.electric.uploading}
+                  onReadingChange={(v) => updateMeter("electric", { reading: v })}
+                  onTriggerPhoto={() => triggerFileInput("electric")}
+                />
+                <MeterCardInput
+                  meterKey="water" label="Water" icon={Droplets}
+                  reading={data.water.reading} photoUrl={data.water.photoUrl} uploading={data.water.uploading}
+                  isWaterNA={data.waterNA}
+                  onWaterNAChange={(v) => setData((p) => ({ ...p, waterNA: v }))}
+                  onReadingChange={(v) => updateMeter("water", { reading: v })}
+                  onTriggerPhoto={() => triggerFileInput("water")}
+                />
               </div>
+              {fileInputElements}
             </SectionCard>
           </div>
         )}

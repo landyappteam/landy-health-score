@@ -108,10 +108,10 @@ const PropertyCard = ({ property, onToggle, onToggleNA, onRemove, onEpcOptimise,
         </div>
       </TooltipProvider>
 
-      {/* Primary action: Start Induction */}
+      {/* Induction action — outline style */}
       <Link
         to={`/induction?propertyId=${property.id}&address=${encodeURIComponent(property.address)}`}
-        className="flex items-center justify-center gap-2 w-full rounded-xl bg-hygge-sage text-hygge-sage-foreground px-4 py-2.5 text-sm font-semibold hover:opacity-90 transition-opacity mb-3"
+        className="flex items-center justify-center gap-2 w-full rounded-xl border-2 border-hygge-sage text-hygge-sage px-4 py-2.5 text-sm font-semibold hover:bg-hygge-sage hover:text-hygge-sage-foreground transition-colors mb-3"
       >
         <ClipboardList className="w-4 h-4" />
         Start Tenant Induction
