@@ -42,6 +42,9 @@ interface InductionData {
   gas: MeterReading;
   electric: MeterReading;
   water: MeterReading;
+  gasNA: boolean;
+  waterNA: boolean;
+  gasSafetyNA: boolean;
   smokeAlarmsTested: boolean;
   carbonMonoxideTested: boolean;
   alarmTestPhotoUrl: string | null;
@@ -110,6 +113,9 @@ const InductionWizard = () => {
     gas: { reading: "", photoUrl: null, uploading: false },
     electric: { reading: "", photoUrl: null, uploading: false },
     water: { reading: "", photoUrl: null, uploading: false },
+    gasNA: false,
+    waterNA: false,
+    gasSafetyNA: false,
     smokeAlarmsTested: false,
     carbonMonoxideTested: false,
     alarmTestPhotoUrl: null,
@@ -192,13 +198,13 @@ const InductionWizard = () => {
 
   /* ─── validation ─── */
   const metersComplete =
-    data.gas.reading.trim() !== "" &&
+    (data.gasNA || data.gas.reading.trim() !== "") &&
     data.electric.reading.trim() !== "" &&
-    data.water.reading.trim() !== "";
+    (data.waterNA || data.water.reading.trim() !== "");
 
   const docsComplete =
     data.epcReceived &&
-    data.gasSafetyReceived &&
+    (data.gasSafetyNA || data.gasSafetyReceived) &&
     data.eicrReceived &&
     data.howToRentReceived &&
     data.govInfoSheetReceived;
@@ -244,16 +250,16 @@ const InductionWizard = () => {
       // Fallback to localStorage if not authenticated
       const induction = {
         propertyId,
-        gas_reading: data.gas.reading,
+      gas_reading: data.gasNA ? "not_applicable" : data.gas.reading,
         electric_reading: data.electric.reading,
-        water_reading: data.water.reading,
+        water_reading: data.waterNA ? "not_applicable" : data.water.reading,
         gas_meter_photo_url: data.gas.photoUrl,
         electric_meter_photo_url: data.electric.photoUrl,
         water_meter_photo_url: data.water.photoUrl,
         smoke_alarm_photo_url: data.alarmTestPhotoUrl,
         smoke_alarms_tested: data.smokeAlarmsTested,
         stopcock_located: data.stopcockShown,
-        gas_safety_received: data.gasSafetyReceived,
+      gas_safety_received: data.gasSafetyNA ? false : data.gasSafetyReceived,
         epc_received: data.epcReceived,
         eicr_received: data.eicrReceived,
         how_to_rent_received: data.howToRentReceived,
@@ -274,19 +280,19 @@ const InductionWizard = () => {
     const { error } = await supabase.from("inductions").insert({
       property_id: propertyId,
       user_id: userId,
-      gas_reading: data.gas.reading || null,
+      gas_reading: data.gasNA ? "not_applicable" : (data.gas.reading || null),
       electric_reading: data.electric.reading || null,
-      water_reading: data.water.reading || null,
-      gas_meter_reading: data.gas.reading || null,
-      gas_meter_photo_url: data.gas.photoUrl,
+      water_reading: data.waterNA ? "not_applicable" : (data.water.reading || null),
+      gas_meter_reading: data.gasNA ? "not_applicable" : (data.gas.reading || null),
+      gas_meter_photo_url: data.gasNA ? null : data.gas.photoUrl,
       electric_meter_reading: data.electric.reading || null,
       electric_meter_photo_url: data.electric.photoUrl,
-      water_meter_reading: data.water.reading || null,
-      water_meter_photo_url: data.water.photoUrl,
+      water_meter_reading: data.waterNA ? "not_applicable" : (data.water.reading || null),
+      water_meter_photo_url: data.waterNA ? null : data.water.photoUrl,
       smoke_alarm_photo_url: data.alarmTestPhotoUrl,
       smoke_alarms_tested: data.smokeAlarmsTested,
       stopcock_located: data.stopcockShown,
-      gas_safety_received: data.gasSafetyReceived,
+      gas_safety_received: data.gasSafetyNA ? false : data.gasSafetyReceived,
       epc_received: data.epcReceived,
       eicr_received: data.eicrReceived,
       how_to_rent_received: data.howToRentReceived,
@@ -438,85 +444,113 @@ const InductionWizard = () => {
             <p className="text-sm text-muted-foreground -mt-2">
               Record each meter reading and snap a photo for your records.
             </p>
-            {METER_CONFIG.map(({ key, label, icon: Icon }) => (
-              <div
-                key={key}
-                className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-3"
-              >
-                <div className="flex items-center gap-2.5">
-                  <div
-                    className="flex items-center justify-center w-8 h-8 rounded-lg"
-                    style={{ backgroundColor: "hsl(var(--hygge-sage) / 0.15)" }}
-                  >
-                    <Icon className="w-4 h-4" style={{ color: "hsl(var(--hygge-sage))" }} />
-                  </div>
-                  <span className="text-sm font-semibold text-foreground">{label}</span>
-                </div>
+            {METER_CONFIG.map(({ key, label, icon: Icon }) => {
+              const isNA = key === "gas" ? data.gasNA : key === "water" ? data.waterNA : false;
+              const hasNAOption = key === "gas" || key === "water";
 
-                <div className="flex gap-2">
-                  <Input
-                    type="number"
-                    placeholder="Enter reading…"
-                    value={data[key].reading}
-                    onChange={(e) => updateMeter(key, { reading: e.target.value })}
-                    className="rounded-xl flex-1"
-                  />
-                  {/* Hidden file input */}
-                  <input
-                    ref={fileInputRefs[key]}
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handlePhotoUpload(key, file);
-                    }}
-                  />
-                  <Button
-                    variant="outline"
-                    className="rounded-xl gap-1.5 shrink-0"
-                    style={
-                      data[key].photoUrl
-                        ? {
-                            backgroundColor: "hsl(var(--hygge-sage))",
-                            color: "hsl(var(--hygge-sage-foreground))",
-                            borderColor: "hsl(var(--hygge-sage))",
-                          }
-                        : {}
-                    }
-                    disabled={data[key].uploading}
-                    onClick={() => triggerFileInput(key)}
-                  >
-                    {data[key].uploading ? (
-                      <span className="landy-spinner" />
-                    ) : (
-                      <Camera className="w-4 h-4" />
+              return (
+                <div
+                  key={key}
+                  className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div
+                        className="flex items-center justify-center w-8 h-8 rounded-lg"
+                        style={{ backgroundColor: "hsl(var(--hygge-sage) / 0.15)" }}
+                      >
+                        <Icon className="w-4 h-4" style={{ color: "hsl(var(--hygge-sage))" }} />
+                      </div>
+                      <span className="text-sm font-semibold text-foreground">{label}</span>
+                    </div>
+                    {hasNAOption && (
+                      <div className="flex items-center gap-2">
+                        <Label htmlFor={`${key}-na`} className="text-xs text-muted-foreground cursor-pointer">
+                          N/A
+                        </Label>
+                        <Switch
+                          id={`${key}-na`}
+                          checked={isNA}
+                          onCheckedChange={(v) => {
+                            const naKey = key === "gas" ? "gasNA" : "waterNA";
+                            setData((p) => ({ ...p, [naKey]: v }));
+                          }}
+                        />
+                      </div>
                     )}
-                    {data[key].photoUrl
-                      ? "Done ✓"
-                      : data[key].uploading
-                      ? "Uploading…"
-                      : "Snap Meter Photo"}
-                  </Button>
-                </div>
-
-                {/* Photo preview thumbnail */}
-                {data[key].photoUrl && (
-                  <div className="flex items-center gap-2">
-                    <ImageIcon className="w-3.5 h-3.5 text-muted-foreground" />
-                    <a
-                      href={data[key].photoUrl!}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-primary underline underline-offset-2 truncate"
-                    >
-                      View uploaded photo
-                    </a>
                   </div>
-                )}
-              </div>
-            ))}
+
+                  {isNA ? (
+                    <p className="text-xs text-muted-foreground italic">
+                      {label} meter is not applicable for this property.
+                    </p>
+                  ) : (
+                    <>
+                      <div className="flex gap-2">
+                        <Input
+                          type="number"
+                          placeholder="Enter reading…"
+                          value={data[key].reading}
+                          onChange={(e) => updateMeter(key, { reading: e.target.value })}
+                          className="rounded-xl flex-1"
+                        />
+                        <input
+                          ref={fileInputRefs[key]}
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handlePhotoUpload(key, file);
+                          }}
+                        />
+                        <Button
+                          variant="outline"
+                          className="rounded-xl gap-1.5 shrink-0"
+                          style={
+                            data[key].photoUrl
+                              ? {
+                                  backgroundColor: "hsl(var(--hygge-sage))",
+                                  color: "hsl(var(--hygge-sage-foreground))",
+                                  borderColor: "hsl(var(--hygge-sage))",
+                                }
+                              : {}
+                          }
+                          disabled={data[key].uploading}
+                          onClick={() => triggerFileInput(key)}
+                        >
+                          {data[key].uploading ? (
+                            <span className="landy-spinner" />
+                          ) : (
+                            <Camera className="w-4 h-4" />
+                          )}
+                          {data[key].photoUrl
+                            ? "Done ✓"
+                            : data[key].uploading
+                            ? "Uploading…"
+                            : "Snap Meter Photo"}
+                        </Button>
+                      </div>
+
+                      {data[key].photoUrl && (
+                        <div className="flex items-center gap-2">
+                          <ImageIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                          <a
+                            href={data[key].photoUrl!}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-primary underline underline-offset-2 truncate"
+                          >
+                            View uploaded photo
+                          </a>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
 
@@ -649,21 +683,40 @@ const InductionWizard = () => {
               Toggle each document the tenant has received.
             </p>
             <div className="rounded-2xl border border-border bg-card p-5 shadow-sm divide-y divide-border">
-              {DOC_TOGGLES.map(({ key, label }) => (
-                <div
-                  key={key}
-                  className="flex items-center justify-between py-3.5 first:pt-0 last:pb-0"
-                >
-                  <Label htmlFor={key} className="text-sm cursor-pointer flex-1 pr-4">
-                    {label}
-                  </Label>
-                  <Switch
-                    id={key}
-                    checked={data[key]}
-                    onCheckedChange={(v) => setData((p) => ({ ...p, [key]: v }))}
-                  />
-                </div>
-              ))}
+              {DOC_TOGGLES.map(({ key, label }) => {
+                const isGasSafety = key === "gasSafetyReceived";
+                return (
+                  <div
+                    key={key}
+                    className="flex items-center justify-between py-3.5 first:pt-0 last:pb-0"
+                  >
+                    <Label htmlFor={key} className={`text-sm cursor-pointer flex-1 pr-4 ${isGasSafety && data.gasSafetyNA ? "line-through text-muted-foreground" : ""}`}>
+                      {label}{isGasSafety && data.gasSafetyNA ? " (N/A)" : ""}
+                    </Label>
+                    <div className="flex items-center gap-2">
+                      {isGasSafety && (
+                        <>
+                          <Label htmlFor="gasSafety-na" className="text-xs text-muted-foreground cursor-pointer">
+                            N/A
+                          </Label>
+                          <Switch
+                            id="gasSafety-na"
+                            checked={data.gasSafetyNA}
+                            onCheckedChange={(v) => setData((p) => ({ ...p, gasSafetyNA: v }))}
+                          />
+                        </>
+                      )}
+                      {!(isGasSafety && data.gasSafetyNA) && (
+                        <Switch
+                          id={key}
+                          checked={data[key]}
+                          onCheckedChange={(v) => setData((p) => ({ ...p, [key]: v }))}
+                        />
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
             {/* Inline validation hint */}
