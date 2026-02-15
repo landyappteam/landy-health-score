@@ -111,10 +111,13 @@ export type Database = {
           how_to_rent_received: boolean
           id: string
           is_gas_applicable: boolean | null
+          is_oil_applicable: boolean | null
           is_stopcock_na: boolean | null
           is_water_meter_applicable: boolean | null
           is_window_restrictor_na: boolean | null
           mould_check_passed: boolean | null
+          oil_level_reading: string | null
+          oil_tank_photo_url: string | null
           property_id: string
           renters_rights_confirmed: boolean | null
           smoke_alarm_photo_url: string | null
@@ -158,10 +161,13 @@ export type Database = {
           how_to_rent_received?: boolean
           id?: string
           is_gas_applicable?: boolean | null
+          is_oil_applicable?: boolean | null
           is_stopcock_na?: boolean | null
           is_water_meter_applicable?: boolean | null
           is_window_restrictor_na?: boolean | null
           mould_check_passed?: boolean | null
+          oil_level_reading?: string | null
+          oil_tank_photo_url?: string | null
           property_id: string
           renters_rights_confirmed?: boolean | null
           smoke_alarm_photo_url?: string | null
@@ -205,10 +211,13 @@ export type Database = {
           how_to_rent_received?: boolean
           id?: string
           is_gas_applicable?: boolean | null
+          is_oil_applicable?: boolean | null
           is_stopcock_na?: boolean | null
           is_water_meter_applicable?: boolean | null
           is_window_restrictor_na?: boolean | null
           mould_check_passed?: boolean | null
+          oil_level_reading?: string | null
+          oil_tank_photo_url?: string | null
           property_id?: string
           renters_rights_confirmed?: boolean | null
           smoke_alarm_photo_url?: string | null
@@ -269,10 +278,14 @@ export type Database = {
           epc: boolean
           gas_safety: boolean
           has_gas_supply: boolean | null
+          heating_type: string | null
           id: string
           info_statement_version: string | null
           is_decent_homes_compliant: boolean | null
           last_mould_inspection: string | null
+          last_oil_service: string | null
+          oftec_due_date: string | null
+          oil_tank_location: string | null
           renters_rights_act_2026: boolean
           requires_hmo_checks: boolean | null
           tenancy_type: string | null
@@ -288,10 +301,14 @@ export type Database = {
           epc?: boolean
           gas_safety?: boolean
           has_gas_supply?: boolean | null
+          heating_type?: string | null
           id?: string
           info_statement_version?: string | null
           is_decent_homes_compliant?: boolean | null
           last_mould_inspection?: string | null
+          last_oil_service?: string | null
+          oftec_due_date?: string | null
+          oil_tank_location?: string | null
           renters_rights_act_2026?: boolean
           requires_hmo_checks?: boolean | null
           tenancy_type?: string | null
@@ -307,10 +324,14 @@ export type Database = {
           epc?: boolean
           gas_safety?: boolean
           has_gas_supply?: boolean | null
+          heating_type?: string | null
           id?: string
           info_statement_version?: string | null
           is_decent_homes_compliant?: boolean | null
           last_mould_inspection?: string | null
+          last_oil_service?: string | null
+          oftec_due_date?: string | null
+          oil_tank_location?: string | null
           renters_rights_act_2026?: boolean
           requires_hmo_checks?: boolean | null
           tenancy_type?: string | null

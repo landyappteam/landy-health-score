@@ -1,6 +1,6 @@
-import { Flame, Zap, BarChart3, Scale, FileText, Trash2, ClipboardList, Lock } from "lucide-react";
+import { Flame, Zap, BarChart3, Scale, FileText, Trash2, ClipboardList, Lock, Droplet } from "lucide-react";
 import { Link } from "react-router-dom";
-import type { Property, ComplianceStatus } from "@/types/property";
+import type { Property, ComplianceStatus, HeatingType } from "@/types/property";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface PropertyCardProps {
@@ -22,8 +22,16 @@ const complianceItems: { key: keyof ComplianceStatus; label: string; icon: typeo
   { key: "tenantInfoStatement", label: "Tenant Info", icon: FileText },
 ];
 
+const heatingIcons: Record<HeatingType, { icon: typeof Flame; label: string }> = {
+  gas: { icon: Flame, label: "Gas" },
+  electric: { icon: Zap, label: "Electric" },
+  oil: { icon: Droplet, label: "Oil" },
+};
+
 const PropertyCard = ({ property, isPro, onToggle, onToggleNA, onRemove, onEpcOptimise, onGeneratePack, onProUpsell }: PropertyCardProps) => {
   const na = property.complianceNA || {};
+  const heating = property.heatingType || "gas";
+  const HeatingIcon = heatingIcons[heating].icon;
 
   // Filter out N/A items entirely
   const visibleItems = complianceItems.filter(({ key }) => !na[key]);
@@ -38,16 +46,22 @@ const PropertyCard = ({ property, isPro, onToggle, onToggleNA, onRemove, onEpcOp
     }
   };
 
+  const inductionUrl = `/induction?propertyId=${property.id}&address=${encodeURIComponent(property.address)}&heating=${heating}`;
+
   return (
     <div className="rounded-[12px] bg-card border border-border p-5 shadow-md flex flex-col">
-      {/* Header row — bold address + compliance count inline */}
+      {/* Header row — heating icon + bold address + compliance count */}
       <div className="flex items-start justify-between mb-3">
-        <div className="flex-1 min-w-0 flex items-baseline gap-2">
+        <div className="flex-1 min-w-0 flex items-center gap-2">
+          <div className="flex items-center justify-center w-7 h-7 rounded-lg shrink-0"
+            style={{ backgroundColor: "hsl(var(--hygge-sage) / 0.15)" }}>
+            <HeatingIcon className="w-3.5 h-3.5" style={{ color: "hsl(var(--hygge-sage))" }} />
+          </div>
           <h3 className="font-serif text-lg font-bold text-card-foreground truncate tracking-tight">
             {property.address}
           </h3>
           <span className="text-xs font-medium text-muted-foreground whitespace-nowrap shrink-0">
-            {compliantCount}/{totalVisible} compliant
+            {compliantCount}/{totalVisible}
           </span>
         </div>
         <button
@@ -132,7 +146,7 @@ const PropertyCard = ({ property, isPro, onToggle, onToggleNA, onRemove, onEpcOp
 
       {/* Induction action — full-width sage green at bottom */}
       <Link
-        to={`/induction?propertyId=${property.id}&address=${encodeURIComponent(property.address)}`}
+        to={inductionUrl}
         className="flex items-center justify-center gap-2 w-full rounded-[12px] bg-hygge-sage text-hygge-sage-foreground px-4 py-2.5 text-sm font-semibold hover:opacity-90 transition-opacity"
       >
         <ClipboardList className="w-4 h-4" />

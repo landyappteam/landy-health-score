@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import type { Property, ComplianceStatus, ComplianceNA, VaultDocument } from "@/types/property";
+import type { Property, ComplianceStatus, ComplianceNA, VaultDocument, HeatingType } from "@/types/property";
 
 const STORAGE_KEY = "landy-properties";
 const VAULT_KEY = "landy-vault";
@@ -25,10 +25,11 @@ export function useProperties() {
     localStorage.setItem(VAULT_KEY, JSON.stringify(documents));
   }, [documents]);
 
-  const addProperty = useCallback((address: string) => {
+  const addProperty = useCallback((address: string, heatingType: HeatingType = "gas") => {
     const newProperty: Property = {
       id: crypto.randomUUID(),
       address,
+      heatingType,
       compliance: {
         gasSafety: false,
         eicr: false,
