@@ -43,6 +43,7 @@ import ProUpsellModal from "@/components/ProUpsellModal";
 import { useToast } from "@/hooks/use-toast";
 import { generateHandoverPdf } from "@/lib/generateHandoverPdf";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserTier } from "@/hooks/useUserTier";
 import heroImg from "@/assets/welcome-hero.jpg";
 
 /* ─── types ─── */
@@ -101,14 +102,6 @@ const STEPS = [
   { label: "Safety", icon: Shield },
   { label: "Summary", icon: PartyPopper },
 ];
-
-const useUserTier = () => {
-  const [tier] = useState<"free" | "pro">(() => {
-    const stored = localStorage.getItem("landy-tier");
-    return stored === "pro" ? "pro" : "free";
-  });
-  return tier;
-};
 
 /* ─── reusable N/A link ─── */
 const NALink = ({
@@ -183,7 +176,7 @@ const InductionWizard = () => {
       navigate("/", { replace: true });
     }
   }, [propertyId, navigate, toast]);
-  const tier = useUserTier();
+  const { tier } = useUserTier();
   const isPro = tier === "pro";
 
   const fileInputRefs = {
