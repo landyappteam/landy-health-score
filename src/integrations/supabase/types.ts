@@ -111,7 +111,9 @@ export type Database = {
           how_to_rent_received: boolean
           id: string
           is_gas_applicable: boolean | null
+          is_stopcock_na: boolean | null
           is_water_meter_applicable: boolean | null
+          is_window_restrictor_na: boolean | null
           mould_check_passed: boolean | null
           property_id: string
           renters_rights_confirmed: boolean | null
@@ -156,7 +158,9 @@ export type Database = {
           how_to_rent_received?: boolean
           id?: string
           is_gas_applicable?: boolean | null
+          is_stopcock_na?: boolean | null
           is_water_meter_applicable?: boolean | null
+          is_window_restrictor_na?: boolean | null
           mould_check_passed?: boolean | null
           property_id: string
           renters_rights_confirmed?: boolean | null
@@ -201,7 +205,9 @@ export type Database = {
           how_to_rent_received?: boolean
           id?: string
           is_gas_applicable?: boolean | null
+          is_stopcock_na?: boolean | null
           is_water_meter_applicable?: boolean | null
+          is_window_restrictor_na?: boolean | null
           mould_check_passed?: boolean | null
           property_id?: string
           renters_rights_confirmed?: boolean | null
