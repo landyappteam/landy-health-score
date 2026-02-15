@@ -63,7 +63,8 @@ export function generateHandoverPdf(data: PdfInductionData) {
     doc.setFont("helvetica", "bold");
     doc.text(`${m.label}:`, 16, y);
     doc.setFont("helvetica", "normal");
-    doc.text(`${m.reading || "—"}${m.photo ? "  (photo attached)" : ""}`, 45, y);
+    const isNA = m.reading === "not_applicable";
+    doc.text(`${isNA ? "N/A" : (m.reading || "—")}${!isNA && m.photo ? "  (photo attached)" : ""}`, 45, y);
     y += 7;
   }
   y += 6;
@@ -98,13 +99,14 @@ export function generateHandoverPdf(data: PdfInductionData) {
 
   const docs = [
     { label: "EPC", done: data.epcReceived },
-    { label: "Gas Safety Certificate", done: data.gasSafetyReceived },
+    { label: "Gas Safety Certificate", done: data.gasSafetyReceived, na: (data as any).gasSafetyNA },
     { label: "EICR", done: data.eicrReceived },
     { label: "2026 Government Information Sheet", done: data.govInfoSheetReceived },
   ];
 
   for (const d of docs) {
-    doc.text(`${d.done ? "✓" : "✗"}  ${d.label}`, 16, y);
+    const marker = (d as any).na ? "N/A" : (d.done ? "✓" : "✗");
+    doc.text(`${marker}  ${d.label}`, 16, y);
     y += 7;
   }
   y += 10;
