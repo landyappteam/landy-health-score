@@ -49,6 +49,83 @@ export type Database = {
           },
         ]
       }
+      inductions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          eicr_received: boolean
+          electric_meter_photo_url: string | null
+          electric_meter_reading: string | null
+          epc_received: boolean
+          gas_meter_photo_url: string | null
+          gas_meter_reading: string | null
+          gas_safety_received: boolean
+          gov_info_sheet_received: boolean
+          how_to_rent_received: boolean
+          id: string
+          property_id: string
+          smoke_alarms_tested: boolean
+          stopcock_located: boolean
+          tenant_signature: string | null
+          updated_at: string
+          user_id: string
+          water_meter_photo_url: string | null
+          water_meter_reading: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          eicr_received?: boolean
+          electric_meter_photo_url?: string | null
+          electric_meter_reading?: string | null
+          epc_received?: boolean
+          gas_meter_photo_url?: string | null
+          gas_meter_reading?: string | null
+          gas_safety_received?: boolean
+          gov_info_sheet_received?: boolean
+          how_to_rent_received?: boolean
+          id?: string
+          property_id: string
+          smoke_alarms_tested?: boolean
+          stopcock_located?: boolean
+          tenant_signature?: string | null
+          updated_at?: string
+          user_id: string
+          water_meter_photo_url?: string | null
+          water_meter_reading?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          eicr_received?: boolean
+          electric_meter_photo_url?: string | null
+          electric_meter_reading?: string | null
+          epc_received?: boolean
+          gas_meter_photo_url?: string | null
+          gas_meter_reading?: string | null
+          gas_safety_received?: boolean
+          gov_info_sheet_received?: boolean
+          how_to_rent_received?: boolean
+          id?: string
+          property_id?: string
+          smoke_alarms_tested?: boolean
+          stopcock_located?: boolean
+          tenant_signature?: string | null
+          updated_at?: string
+          user_id?: string
+          water_meter_photo_url?: string | null
+          water_meter_reading?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inductions_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           email: string | null
