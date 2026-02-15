@@ -17,6 +17,15 @@ import {
   AlertCircle,
   ImageIcon,
   Sparkles,
+  Home,
+  Building2,
+  Users,
+  DoorOpen,
+  Radio,
+  ArrowUpDown,
+  ShieldCheck,
+  FireExtinguisher,
+  LogOut,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +41,8 @@ import { supabase } from "@/integrations/supabase/client";
 import heroImg from "@/assets/welcome-hero.jpg";
 
 /* ─── types ─── */
+type PropertyType = "house" | "flat" | "hmo" | null;
+
 interface MeterReading {
   reading: string;
   photoUrl: string | null;
@@ -39,6 +50,7 @@ interface MeterReading {
 }
 
 interface InductionData {
+  propertyType: PropertyType;
   gas: MeterReading;
   electric: MeterReading;
   water: MeterReading;
@@ -50,6 +62,14 @@ interface InductionData {
   alarmTestPhotoUrl: string | null;
   alarmTestUploading: boolean;
   stopcockShown: boolean;
+  // Flat-specific
+  fireDoors: boolean;
+  intercom: boolean;
+  liftAccess: boolean;
+  // HMO-specific
+  hmoLicense: boolean;
+  fireExtinguishers: boolean;
+  fireExitSignage: boolean;
   epcReceived: boolean;
   gasSafetyReceived: boolean;
   eicrReceived: boolean;
@@ -60,6 +80,7 @@ interface InductionData {
 
 /* ─── constants ─── */
 const STEPS = [
+  { label: "Property", icon: Home },
   { label: "Meters", icon: Gauge },
   { label: "Safety", icon: FileText },
   { label: "Documents", icon: PenLine },
@@ -110,6 +131,7 @@ const InductionWizard = () => {
   const [validationMsg, setValidationMsg] = useState<string | null>(null);
 
   const [data, setData] = useState<InductionData>({
+    propertyType: null,
     gas: { reading: "", photoUrl: null, uploading: false },
     electric: { reading: "", photoUrl: null, uploading: false },
     water: { reading: "", photoUrl: null, uploading: false },
@@ -121,6 +143,12 @@ const InductionWizard = () => {
     alarmTestPhotoUrl: null,
     alarmTestUploading: false,
     stopcockShown: false,
+    fireDoors: false,
+    intercom: false,
+    liftAccess: false,
+    hmoLicense: false,
+    fireExtinguishers: false,
+    fireExitSignage: false,
     epcReceived: false,
     gasSafetyReceived: false,
     eicrReceived: false,
@@ -210,8 +238,9 @@ const InductionWizard = () => {
     data.govInfoSheetReceived;
 
   const canAdvanceTo = (targetStep: number): boolean => {
-    if (targetStep <= 2) return true; // steps 0-2 always reachable
-    // Step 3 (Completion) requires meters + docs
+    if (targetStep === 1 && !data.propertyType) return false; // must pick property type
+    if (targetStep <= 3) return true; // steps 0-3 always reachable (after type)
+    // Step 4 (Completion) requires meters + docs
     return metersComplete && docsComplete;
   };
 
@@ -219,6 +248,7 @@ const InductionWizard = () => {
     const target = step + 1;
     if (!canAdvanceTo(target)) {
       const missing: string[] = [];
+      if (target === 1 && !data.propertyType) missing.push("a property type");
       if (!metersComplete) missing.push("all meter readings");
       if (!docsComplete) missing.push("all document toggles");
       setValidationMsg(`Please complete ${missing.join(" and ")} before proceeding.`);
@@ -435,8 +465,61 @@ const InductionWizard = () => {
           </div>
         )}
 
-        {/* ─── Step 0: Utility Meters ─── */}
+        {/* ─── Step 0: Property Type ─── */}
         {step === 0 && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold text-foreground" style={serifFont}>
+              Property Type
+            </h2>
+            <p className="text-sm text-muted-foreground -mt-2">
+              Select the type of property to tailor the walkthrough.
+            </p>
+            <div className="grid grid-cols-3 gap-3">
+              {([
+                { type: "house" as const, label: "House", icon: Home },
+                { type: "flat" as const, label: "Flat / Apt", icon: Building2 },
+                { type: "hmo" as const, label: "HMO", icon: Users },
+              ]).map(({ type, label, icon: Icon }) => {
+                const selected = data.propertyType === type;
+                return (
+                  <button
+                    key={type}
+                    onClick={() => setData((p) => ({ ...p, propertyType: type }))}
+                    className="flex flex-col items-center gap-2.5 rounded-2xl border-2 p-5 transition-all"
+                    style={{
+                      borderColor: selected ? "hsl(var(--hygge-sage))" : "hsl(var(--border))",
+                      backgroundColor: selected ? "hsl(var(--hygge-sage) / 0.08)" : "hsl(var(--card))",
+                    }}
+                  >
+                    <div
+                      className="flex items-center justify-center w-11 h-11 rounded-xl"
+                      style={{
+                        backgroundColor: selected ? "hsl(var(--hygge-sage) / 0.2)" : "hsl(var(--hygge-sage) / 0.1)",
+                      }}
+                    >
+                      <Icon
+                        className="w-5 h-5"
+                        style={{ color: selected ? "hsl(var(--hygge-sage))" : "hsl(var(--muted-foreground))" }}
+                      />
+                    </div>
+                    <span
+                      className="text-sm font-semibold"
+                      style={{ color: selected ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))" }}
+                    >
+                      {label}
+                    </span>
+                    {selected && (
+                      <Check className="w-4 h-4" style={{ color: "hsl(var(--hygge-sage))" }} />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ─── Step 1: Utility Meters ─── */}
+        {step === 1 && (
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-foreground" style={serifFont}>
               Utility Meters
@@ -447,6 +530,9 @@ const InductionWizard = () => {
             {METER_CONFIG.map(({ key, label, icon: Icon }) => {
               const isNA = key === "gas" ? data.gasNA : key === "water" ? data.waterNA : false;
               const hasNAOption = key === "gas" || key === "water";
+
+              // Smart hide: if Flat + water N/A, hide the entire water card
+              if (key === "water" && data.propertyType === "flat" && data.waterNA) return null;
 
               return (
                 <div
@@ -554,8 +640,8 @@ const InductionWizard = () => {
           </div>
         )}
 
-        {/* ─── Step 1: Safety Checks ─── */}
-        {step === 1 && (
+        {/* ─── Step 2: Safety Checks ─── */}
+        {step === 2 && (
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-foreground" style={serifFont}>
               Safety Checks
@@ -670,11 +756,80 @@ const InductionWizard = () => {
                 </Label>
               </div>
             </div>
+            {/* Flat: Communal & Building Safety */}
+            {data.propertyType === "flat" && (
+              <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-4">
+                <div className="flex items-center gap-2.5">
+                  <div
+                    className="flex items-center justify-center w-8 h-8 rounded-lg"
+                    style={{ backgroundColor: "hsl(var(--hygge-sage) / 0.15)" }}
+                  >
+                    <Building2 className="w-4 h-4" style={{ color: "hsl(var(--hygge-sage))" }} />
+                  </div>
+                  <span className="text-sm font-semibold text-foreground">Communal & Building Safety</span>
+                </div>
+                <div className="space-y-3.5">
+                  {([
+                    { id: "fireDoors", label: "Fire Doors Checked", icon: DoorOpen },
+                    { id: "intercom", label: "Intercom Operational", icon: Radio },
+                    { id: "liftAccess", label: "Lift Access Confirmed", icon: ArrowUpDown },
+                  ] as const).map(({ id, label, icon: CIcon }) => (
+                    <div key={id} className="flex items-start gap-3">
+                      <Checkbox
+                        id={id}
+                        checked={data[id]}
+                        onCheckedChange={(v) => setData((p) => ({ ...p, [id]: !!v }))}
+                        className="mt-0.5"
+                      />
+                      <Label htmlFor={id} className="text-sm cursor-pointer leading-snug flex items-center gap-1.5">
+                        <CIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                        {label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* HMO: License & Shared Facilities */}
+            {data.propertyType === "hmo" && (
+              <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-4">
+                <div className="flex items-center gap-2.5">
+                  <div
+                    className="flex items-center justify-center w-8 h-8 rounded-lg"
+                    style={{ backgroundColor: "hsl(var(--hygge-sage) / 0.15)" }}
+                  >
+                    <ShieldCheck className="w-4 h-4" style={{ color: "hsl(var(--hygge-sage))" }} />
+                  </div>
+                  <span className="text-sm font-semibold text-foreground">License & Shared Facilities</span>
+                </div>
+                <div className="space-y-3.5">
+                  {([
+                    { id: "hmoLicense", label: "HMO License Displayed", icon: ShieldCheck },
+                    { id: "fireExtinguishers", label: "Fire Extinguishers Present", icon: FireExtinguisher },
+                    { id: "fireExitSignage", label: "Fire Exit Signage Visible", icon: LogOut },
+                  ] as const).map(({ id, label, icon: CIcon }) => (
+                    <div key={id} className="flex items-start gap-3">
+                      <Checkbox
+                        id={id}
+                        checked={data[id]}
+                        onCheckedChange={(v) => setData((p) => ({ ...p, [id]: !!v }))}
+                        className="mt-0.5"
+                      />
+                      <Label htmlFor={id} className="text-sm cursor-pointer leading-snug flex items-center gap-1.5">
+                        <CIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                        {label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        {/* ─── Step 2: Documents ─── */}
-        {step === 2 && (
+        {/* ─── Step 3: Documents ─── */}
+        {step === 3 && (
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-foreground" style={serifFont}>
               Documents Provided
@@ -728,8 +883,8 @@ const InductionWizard = () => {
           </div>
         )}
 
-        {/* ─── Step 3: Completion ─── */}
-        {step === 3 && (
+        {/* ─── Step 4: Completion ─── */}
+        {step === 4 && (
           <div className="space-y-6">
             <h2 className="text-lg font-semibold text-foreground" style={serifFont}>
               Completion
@@ -872,7 +1027,7 @@ const InductionWizard = () => {
               <ArrowLeft className="w-4 h-4 mr-1.5" /> Back
             </Button>
           )}
-          {step < 3 ? (
+          {step < 4 ? (
             <button
               className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl h-12 text-sm font-medium transition-opacity hover:opacity-90"
               style={{
