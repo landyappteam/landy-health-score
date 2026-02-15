@@ -24,71 +24,76 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-lg px-4 pb-8">
-        {/* Header */}
-        <header className="flex items-center justify-between pt-6 pb-2">
-          <div className="flex items-center gap-2.5">
-            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary text-primary-foreground">
-              <Home className="w-5 h-5" />
+      {/* Sticky search header */}
+      <div className="sticky top-0 z-30 border-b border-border shadow-sm" style={{ backgroundColor: "hsl(var(--hygge-cream))" }}>
+        <div className="mx-auto max-w-lg px-4">
+          {/* Top bar */}
+          <header className="flex items-center justify-between pt-4 pb-2">
+            <div className="flex items-center gap-2.5">
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-primary-foreground">
+                <Home className="w-4 h-4" />
+              </div>
+              <h1 className="text-lg font-bold text-foreground tracking-tight">Landy</h1>
             </div>
-            <h1 className="text-xl font-bold text-foreground tracking-tight">Landy</h1>
-          </div>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setScannerOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
-            >
-              <Camera className="w-4 h-4" />
-              Scan
-            </button>
-            <Link
-              to="/vault"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
-            >
-              <FolderOpen className="w-4 h-4" />
-              Vault
-            </Link>
-            <button
-              onClick={signOut}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-              title="Sign out"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
-        </header>
+            <div className="flex items-center gap-0.5">
+              <button
+                onClick={() => setScannerOpen(true)}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:bg-accent transition-colors"
+              >
+                <Camera className="w-3.5 h-3.5" />
+                Scan
+              </button>
+              <Link
+                to="/vault"
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:bg-accent transition-colors"
+              >
+                <FolderOpen className="w-3.5 h-3.5" />
+                Vault
+              </Link>
+              <button
+                onClick={signOut}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                title="Sign out"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </header>
 
+          {/* Compact add property form */}
+          <div className="pb-3">
+            <AddPropertyForm onAdd={addProperty} />
+          </div>
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div className="mx-auto max-w-lg px-4 pb-8">
         {/* Score */}
         <ComplianceScore score={healthScore} propertyCount={properties.length} />
 
         {/* Risk Assessment */}
         <RiskAssessmentCard properties={properties} />
 
-        {/* Add Property – cream card */}
-        <div className="mb-5 rounded-2xl border border-border bg-hygge-cream p-4 shadow-sm">
-          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-            Add Property
-          </h2>
-          <AddPropertyForm onAdd={addProperty} />
-        </div>
-
         {/* Properties List */}
         {properties.length > 0 && (
-          <div className="space-y-4">
-            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+          <div className="rounded-2xl p-4 -mx-1" style={{ backgroundColor: "#FAF9F6" }}>
+            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3 px-1">
               Your Properties
             </h2>
-            {properties.map((property) => (
-              <PropertyCard
-                key={property.id}
-                property={property}
-                onToggle={toggleCompliance}
-                onToggleNA={toggleNA}
-                onRemove={removeProperty}
-                onEpcOptimise={() => setEpcModalOpen(true)}
-                onGeneratePack={(id) => setPackPropertyId(id)}
-              />
-            ))}
+            <div className="space-y-4">
+              {properties.map((property) => (
+                <PropertyCard
+                  key={property.id}
+                  property={property}
+                  onToggle={toggleCompliance}
+                  onToggleNA={toggleNA}
+                  onRemove={removeProperty}
+                  onEpcOptimise={() => setEpcModalOpen(true)}
+                  onGeneratePack={(id) => setPackPropertyId(id)}
+                />
+              ))}
+            </div>
           </div>
         )}
 

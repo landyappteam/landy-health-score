@@ -439,11 +439,11 @@ const InductionWizard = () => {
     ] : []),
   ];
 
-  /* ─── meter card renderer ─── */
-  const MeterCard = ({ meterKey, label, icon: Icon }: { meterKey: "gas" | "electric" | "water"; label: string; icon: React.ElementType }) => {
+  /* ─── meter card renderer (stable — not a nested component) ─── */
+  const renderMeterCard = (meterKey: "gas" | "electric" | "water", label: string, Icon: React.ElementType) => {
     const isWaterNA = meterKey === "water" && data.waterNA;
     return (
-      <div className="space-y-3">
+      <div key={meterKey} className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Icon className="w-4 h-4" style={{ color: "hsl(var(--hygge-sage))" }} />
@@ -619,9 +619,9 @@ const InductionWizard = () => {
             <SectionCard title="Meter Readings & Photos" icon={Gauge}
               naActive={data.utilityNA} onToggleNA={() => setData((p) => ({ ...p, utilityNA: !p.utilityNA }))}>
               <div className="space-y-5">
-                {!noGas && <MeterCard meterKey="gas" label="Gas" icon={Flame} />}
-                <MeterCard meterKey="electric" label="Electric" icon={Zap} />
-                <MeterCard meterKey="water" label="Water" icon={Droplets} />
+                {!noGas && renderMeterCard("gas", "Gas", Flame)}
+                {renderMeterCard("electric", "Electric", Zap)}
+                {renderMeterCard("water", "Water", Droplets)}
               </div>
             </SectionCard>
           </div>
