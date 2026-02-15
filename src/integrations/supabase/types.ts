@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      action_alerts: {
+        Row: {
+          alert_type: string | null
+          created_at: string | null
+          id: string
+          is_resolved: boolean | null
+          property_id: string | null
+          resolved_at: string | null
+        }
+        Insert: {
+          alert_type?: string | null
+          created_at?: string | null
+          id?: string
+          is_resolved?: boolean | null
+          property_id?: string | null
+          resolved_at?: string | null
+        }
+        Update: {
+          alert_type?: string | null
+          created_at?: string | null
+          id?: string
+          is_resolved?: boolean | null
+          property_id?: string | null
+          resolved_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "action_alerts_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           added_at: string
@@ -228,8 +263,11 @@ export type Database = {
           epc: boolean
           gas_safety: boolean
           id: string
+          info_statement_version: string | null
           is_decent_homes_compliant: boolean | null
+          last_mould_inspection: string | null
           renters_rights_act_2026: boolean
+          requires_hmo_checks: boolean | null
           tenancy_type: string | null
           tenant_info_statement: boolean
           updated_at: string
@@ -243,8 +281,11 @@ export type Database = {
           epc?: boolean
           gas_safety?: boolean
           id?: string
+          info_statement_version?: string | null
           is_decent_homes_compliant?: boolean | null
+          last_mould_inspection?: string | null
           renters_rights_act_2026?: boolean
+          requires_hmo_checks?: boolean | null
           tenancy_type?: string | null
           tenant_info_statement?: boolean
           updated_at?: string
@@ -258,8 +299,11 @@ export type Database = {
           epc?: boolean
           gas_safety?: boolean
           id?: string
+          info_statement_version?: string | null
           is_decent_homes_compliant?: boolean | null
+          last_mould_inspection?: string | null
           renters_rights_act_2026?: boolean
+          requires_hmo_checks?: boolean | null
           tenancy_type?: string | null
           tenant_info_statement?: boolean
           updated_at?: string

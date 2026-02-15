@@ -64,8 +64,10 @@ interface InductionData {
   // Section N/A flags
   utilityNA: boolean;
   legalNA: boolean;
-  safetyNA: boolean;
   buildingNA: boolean;
+  // Individual safety N/A flags
+  windowRestrictorsNA: boolean;
+  stopcockNA: boolean;
   // Safety & Condition
   smokeAlarmsTested: boolean;
   carbonMonoxideTested: boolean;
@@ -196,8 +198,9 @@ const InductionWizard = () => {
     waterNA: false,
     utilityNA: false,
     legalNA: false,
-    safetyNA: false,
     buildingNA: false,
+    windowRestrictorsNA: false,
+    stopcockNA: false,
     smokeAlarmsTested: false,
     carbonMonoxideTested: false,
     alarmTestPhotoUrl: null,
@@ -336,9 +339,10 @@ const InductionWizard = () => {
       electric_meter_photo_url: data.utilityNA ? null : data.electric.photoUrl,
       water_meter_reading: data.utilityNA || data.waterNA ? "not_applicable" : (data.water.reading || null),
       water_meter_photo_url: data.utilityNA || data.waterNA ? null : data.water.photoUrl,
-      smoke_alarm_photo_url: data.safetyNA ? null : data.alarmTestPhotoUrl,
-      smoke_alarms_tested: data.safetyNA ? false : data.smokeAlarmsTested,
-      stopcock_located: data.safetyNA ? false : data.stopcockShown,
+      smoke_alarm_photo_url: data.alarmTestPhotoUrl,
+      smoke_alarms_tested: data.smokeAlarmsTested,
+      stopcock_located: data.stopcockNA ? false : data.stopcockShown,
+      window_restrictors_ok: data.windowRestrictorsNA ? null : data.windowRestrictors,
       gas_safety_received: data.legalNA || noGas ? false : data.gasSafetyReceived,
       epc_received: data.legalNA ? false : data.epcReceived,
       eicr_received: data.legalNA ? false : data.eicrReceived,
@@ -419,13 +423,12 @@ const InductionWizard = () => {
       { label: "EICR", value: data.eicrReceived ? "✓" : "✗", na: false },
       ...(noGas ? [] : [{ label: "Gas Safety Cert", value: data.gasSafetyReceived ? "✓" : "✗", na: false }]),
     ]),
-    { label: "Safety & Condition", value: data.safetyNA ? "N/A" : "Completed", na: data.safetyNA },
-    ...(data.safetyNA ? [] : [
-      { label: "Smoke Alarms", value: data.smokeAlarmsTested ? "✓" : "✗", na: false },
-      { label: "CO Alarms", value: data.carbonMonoxideTested ? "✓" : "✗", na: false },
-      { label: "Damp/Mould Check", value: data.dampMouldCheck ? "✓" : "✗", na: false },
-      { label: "Window Restrictors", value: data.windowRestrictors ? "✓" : "✗", na: false },
-    ]),
+    { label: "Safety & Condition", value: "Completed", na: false },
+    { label: "Smoke Alarms", value: data.smokeAlarmsTested ? "✓" : "✗", na: false },
+    { label: "CO Alarms", value: data.carbonMonoxideTested ? "✓" : "✗", na: false },
+    { label: "Damp/Mould Check", value: data.dampMouldCheck ? "✓" : "✗", na: false },
+    { label: "Window Restrictors", value: data.windowRestrictorsNA ? "N/A" : (data.windowRestrictors ? "✓" : "✗"), na: data.windowRestrictorsNA },
+    { label: "Stopcock Location", value: data.stopcockNA ? "N/A" : (data.stopcockShown ? "✓" : "✗"), na: data.stopcockNA },
     ...(showBuilding ? [
       { label: "Building Specifics", value: data.buildingNA ? "N/A" : "Completed", na: data.buildingNA },
       ...(data.buildingNA ? [] : [
@@ -698,9 +701,16 @@ const InductionWizard = () => {
               </div>
             </div>
 
-            {/* Safety & Condition inline */}
-            <SectionCard title="Safety & Condition" icon={Shield}
-              naActive={data.safetyNA} onToggleNA={() => setData((p) => ({ ...p, safetyNA: !p.safetyNA }))}>
+            {/* Safety & Condition — no global N/A, individual toggles instead */}
+            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-4">
+              <div className="flex items-center gap-2.5">
+                <div className="flex items-center justify-center w-8 h-8 rounded-lg"
+                  style={{ backgroundColor: "hsl(var(--hygge-sage) / 0.15)" }}>
+                  <Shield className="w-4 h-4" style={{ color: "hsl(var(--hygge-sage))" }} />
+                </div>
+                <span className="text-sm font-semibold text-foreground">Safety & Condition</span>
+              </div>
+
               <div className="space-y-3.5">
                 <div className="flex items-start gap-3">
                   <Checkbox id="smokeAlarmsTested" checked={data.smokeAlarmsTested}
@@ -719,10 +729,27 @@ const InductionWizard = () => {
                     onCheckedChange={(v) => setData((p) => ({ ...p, dampMouldCheck: !!v }))} className="mt-0.5" />
                   <Label htmlFor="dampMouldCheck" className="text-sm cursor-pointer leading-snug">Damp & Mould Check</Label>
                 </div>
-                <div className="flex items-start gap-3">
+
+                {/* Window Restrictors — with individual N/A */}
+                <div className={`flex items-center gap-3 transition-opacity ${data.windowRestrictorsNA ? "opacity-40" : ""}`}>
                   <Checkbox id="windowRestrictors" checked={data.windowRestrictors}
+                    disabled={data.windowRestrictorsNA}
                     onCheckedChange={(v) => setData((p) => ({ ...p, windowRestrictors: !!v }))} className="mt-0.5" />
-                  <Label htmlFor="windowRestrictors" className="text-sm cursor-pointer leading-snug">Window Restrictors Checked</Label>
+                  <Label htmlFor="windowRestrictors" className={`text-sm cursor-pointer leading-snug flex-1 ${data.windowRestrictorsNA ? "line-through" : ""}`}>
+                    Window Restrictors Checked
+                  </Label>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-[10px] text-muted-foreground">N/A</span>
+                    <Switch
+                      checked={data.windowRestrictorsNA}
+                      onCheckedChange={(v) => setData((p) => ({
+                        ...p,
+                        windowRestrictorsNA: v,
+                        windowRestrictors: v ? false : p.windowRestrictors,
+                      }))}
+                      className="data-[state=checked]:bg-hygge-sage scale-75"
+                    />
+                  </div>
                 </div>
 
                 {/* Alarm test photo */}
@@ -737,13 +764,29 @@ const InductionWizard = () => {
                   </Button>
                 </div>
 
-                <div className="flex items-start gap-3">
+                {/* Stopcock — with individual N/A */}
+                <div className={`flex items-center gap-3 transition-opacity ${data.stopcockNA ? "opacity-40" : ""}`}>
                   <Checkbox id="stopcockShown" checked={data.stopcockShown}
+                    disabled={data.stopcockNA}
                     onCheckedChange={(v) => setData((p) => ({ ...p, stopcockShown: !!v }))} className="mt-0.5" />
-                  <Label htmlFor="stopcockShown" className="text-sm cursor-pointer leading-snug">Stopcock Location Shown</Label>
+                  <Label htmlFor="stopcockShown" className={`text-sm cursor-pointer leading-snug flex-1 ${data.stopcockNA ? "line-through" : ""}`}>
+                    Stopcock Location Shown
+                  </Label>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-[10px] text-muted-foreground">N/A</span>
+                    <Switch
+                      checked={data.stopcockNA}
+                      onCheckedChange={(v) => setData((p) => ({
+                        ...p,
+                        stopcockNA: v,
+                        stopcockShown: v ? false : p.stopcockShown,
+                      }))}
+                      className="data-[state=checked]:bg-hygge-sage scale-75"
+                    />
+                  </div>
                 </div>
               </div>
-            </SectionCard>
+            </div>
 
             {/* Signature Pad */}
             <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-3 relative">
