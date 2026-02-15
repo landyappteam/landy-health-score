@@ -102,3 +102,18 @@
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   }
 }
+
+@layer components {
+  .landy-spinner {
+    @apply w-4 h-4 rounded-full border-2 border-primary/30 border-t-primary;
+    animation: landy-spin 0.8s ease-in-out infinite, landy-pulse 1.6s ease-in-out infinite;
+  }
+}
+
+@keyframes landy-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes landy-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Search, Loader2 } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 
 interface AddPropertyFormProps {
   onAdd: (address: string) => void;
@@ -98,7 +98,7 @@ const AddPropertyForm = ({ onAdd }: AddPropertyFormProps) => {
           className="inline-flex items-center gap-1.5 rounded-lg bg-secondary px-4 py-2.5 text-sm font-medium text-secondary-foreground shadow-sm hover:opacity-90 disabled:opacity-40 transition-opacity"
         >
           {loading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
+            <span className="landy-spinner" />
           ) : (
             <Search className="w-4 h-4" />
           )}
