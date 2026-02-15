@@ -51,6 +51,10 @@
     --risk-warm: 25 80% 55%;
     --risk-warm-foreground: 25 90% 20%;
     --risk-warm-muted: 30 30% 92%;
+
+    --hygge-cream: 45 100% 98%;
+    --hygge-sage: 138 16% 61%;
+    --hygge-sage-foreground: 0 0% 100%;
   }
 
   .dark {
