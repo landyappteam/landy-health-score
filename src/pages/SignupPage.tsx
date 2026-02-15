@@ -37,14 +37,14 @@ const SignupPage = () => {
 
   if (sent) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <Card className="w-full max-w-sm text-center">
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: "hsl(var(--hygge-cream))" }}>
+        <Card className="w-full max-w-sm text-center border-none shadow-lg" style={{ backgroundColor: "hsl(0 0% 100% / 0.85)" }}>
           <CardHeader>
             <CardTitle className="text-lg">Check your email</CardTitle>
             <CardDescription>We've sent a confirmation link to <strong>{email}</strong>. Click it to activate your account.</CardDescription>
           </CardHeader>
           <CardFooter className="justify-center">
-            <Link to="/login" className="text-sm text-primary hover:underline">Back to login</Link>
+            <Link to="/login" className="text-sm hover:underline" style={{ color: "hsl(var(--hygge-sage))" }}>Back to login</Link>
           </CardFooter>
         </Card>
       </div>
@@ -52,11 +52,11 @@ const SignupPage = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <Card className="w-full max-w-sm">
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: "hsl(var(--hygge-cream))" }}>
+      <Card className="w-full max-w-sm border-none shadow-lg" style={{ backgroundColor: "hsl(0 0% 100% / 0.85)" }}>
         <CardHeader className="text-center">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary text-primary-foreground">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl" style={{ backgroundColor: "hsl(var(--hygge-sage))", color: "hsl(var(--hygge-sage-foreground))" }}>
               <Home className="w-5 h-5" />
             </div>
             <span className="text-xl font-bold text-foreground tracking-tight">Landy</span>
@@ -68,25 +68,25 @@ const SignupPage = () => {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Full name</Label>
-              <Input id="name" placeholder="Jane Smith" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+              <Input id="name" placeholder="Jane Smith" value={fullName} onChange={(e) => setFullName(e.target.value)} required className="bg-background/60" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required className="bg-background/60" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" placeholder="At least 6 characters" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+              <Input id="password" type="password" placeholder="At least 6 characters" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} className="bg-background/60" />
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-3">
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full text-white" disabled={loading} style={{ backgroundColor: "hsl(var(--hygge-sage))" }}>
               {loading ? <span className="landy-spinner" /> : <UserPlus className="w-4 h-4" />}
               Create Account
             </Button>
             <p className="text-sm text-muted-foreground">
               Already have an account?{" "}
-              <Link to="/login" className="text-primary hover:underline font-medium">Sign in</Link>
+              <Link to="/login" className="font-medium hover:underline" style={{ color: "hsl(var(--hygge-sage))" }}>Sign in</Link>
             </p>
           </CardFooter>
         </form>
