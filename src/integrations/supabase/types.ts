@@ -51,15 +51,23 @@ export type Database = {
       }
       inductions: {
         Row: {
+          co_alarm_tested: boolean | null
           completed_at: string | null
           created_at: string
+          doc_eicr_provided: boolean | null
+          doc_epc_provided: boolean | null
+          doc_gov_info_sheet_2026: boolean | null
+          doc_how_to_rent_2026: boolean | null
           eicr_received: boolean
           electric_meter_photo_url: string | null
           electric_meter_reading: string | null
+          electric_photo_url: string | null
           electric_reading: string | null
           epc_received: boolean
+          fire_doors_checked: boolean | null
           gas_meter_photo_url: string | null
           gas_meter_reading: string | null
+          gas_photo_url: string | null
           gas_reading: string | null
           gas_safety_received: boolean
           gov_info_sheet_provided: boolean | null
@@ -67,8 +75,12 @@ export type Database = {
           how_to_rent_2026_provided: boolean | null
           how_to_rent_received: boolean
           id: string
+          is_gas_applicable: boolean | null
+          is_water_meter_applicable: boolean | null
+          mould_check_passed: boolean | null
           property_id: string
           smoke_alarm_photo_url: string | null
+          smoke_alarm_tested: boolean | null
           smoke_alarms_tested: boolean
           stopcock_located: boolean
           tenant_signature: string | null
@@ -76,18 +88,28 @@ export type Database = {
           user_id: string
           water_meter_photo_url: string | null
           water_meter_reading: string | null
+          water_photo_url: string | null
           water_reading: string | null
+          window_restrictors_ok: boolean | null
         }
         Insert: {
+          co_alarm_tested?: boolean | null
           completed_at?: string | null
           created_at?: string
+          doc_eicr_provided?: boolean | null
+          doc_epc_provided?: boolean | null
+          doc_gov_info_sheet_2026?: boolean | null
+          doc_how_to_rent_2026?: boolean | null
           eicr_received?: boolean
           electric_meter_photo_url?: string | null
           electric_meter_reading?: string | null
+          electric_photo_url?: string | null
           electric_reading?: string | null
           epc_received?: boolean
+          fire_doors_checked?: boolean | null
           gas_meter_photo_url?: string | null
           gas_meter_reading?: string | null
+          gas_photo_url?: string | null
           gas_reading?: string | null
           gas_safety_received?: boolean
           gov_info_sheet_provided?: boolean | null
@@ -95,8 +117,12 @@ export type Database = {
           how_to_rent_2026_provided?: boolean | null
           how_to_rent_received?: boolean
           id?: string
+          is_gas_applicable?: boolean | null
+          is_water_meter_applicable?: boolean | null
+          mould_check_passed?: boolean | null
           property_id: string
           smoke_alarm_photo_url?: string | null
+          smoke_alarm_tested?: boolean | null
           smoke_alarms_tested?: boolean
           stopcock_located?: boolean
           tenant_signature?: string | null
@@ -104,18 +130,28 @@ export type Database = {
           user_id: string
           water_meter_photo_url?: string | null
           water_meter_reading?: string | null
+          water_photo_url?: string | null
           water_reading?: string | null
+          window_restrictors_ok?: boolean | null
         }
         Update: {
+          co_alarm_tested?: boolean | null
           completed_at?: string | null
           created_at?: string
+          doc_eicr_provided?: boolean | null
+          doc_epc_provided?: boolean | null
+          doc_gov_info_sheet_2026?: boolean | null
+          doc_how_to_rent_2026?: boolean | null
           eicr_received?: boolean
           electric_meter_photo_url?: string | null
           electric_meter_reading?: string | null
+          electric_photo_url?: string | null
           electric_reading?: string | null
           epc_received?: boolean
+          fire_doors_checked?: boolean | null
           gas_meter_photo_url?: string | null
           gas_meter_reading?: string | null
+          gas_photo_url?: string | null
           gas_reading?: string | null
           gas_safety_received?: boolean
           gov_info_sheet_provided?: boolean | null
@@ -123,8 +159,12 @@ export type Database = {
           how_to_rent_2026_provided?: boolean | null
           how_to_rent_received?: boolean
           id?: string
+          is_gas_applicable?: boolean | null
+          is_water_meter_applicable?: boolean | null
+          mould_check_passed?: boolean | null
           property_id?: string
           smoke_alarm_photo_url?: string | null
+          smoke_alarm_tested?: boolean | null
           smoke_alarms_tested?: boolean
           stopcock_located?: boolean
           tenant_signature?: string | null
@@ -132,7 +172,9 @@ export type Database = {
           user_id?: string
           water_meter_photo_url?: string | null
           water_meter_reading?: string | null
+          water_photo_url?: string | null
           water_reading?: string | null
+          window_restrictors_ok?: boolean | null
         }
         Relationships: [
           {
