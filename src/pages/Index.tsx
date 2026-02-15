@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Home, FolderOpen, Camera, ClipboardList } from "lucide-react";
+import { Home, FolderOpen, Camera, ClipboardList, LogOut } from "lucide-react";
 import emptyStateImg from "@/assets/empty-state-home.png";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import ComplianceScore from "@/components/ComplianceScore";
 import PropertyCard from "@/components/PropertyCard";
 import AddPropertyForm from "@/components/AddPropertyForm";
@@ -14,6 +15,7 @@ import { useProperties } from "@/hooks/useProperties";
 const Index = () => {
   const { properties, documents, addProperty, toggleCompliance, removeProperty, healthScore } =
     useProperties();
+  const { signOut } = useAuth();
   const [epcModalOpen, setEpcModalOpen] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [packPropertyId, setPackPropertyId] = useState<string | null>(null);
@@ -31,7 +33,7 @@ const Index = () => {
             </div>
             <h1 className="text-xl font-bold text-foreground tracking-tight">Landy</h1>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <button
               onClick={() => setScannerOpen(true)}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
@@ -46,6 +48,13 @@ const Index = () => {
               <FolderOpen className="w-4 h-4" />
               Vault
             </Link>
+            <button
+              onClick={signOut}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+              title="Sign out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </header>
 
