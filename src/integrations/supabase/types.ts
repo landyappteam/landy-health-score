@@ -56,9 +56,11 @@ export type Database = {
           eicr_received: boolean
           electric_meter_photo_url: string | null
           electric_meter_reading: string | null
+          electric_reading: string | null
           epc_received: boolean
           gas_meter_photo_url: string | null
           gas_meter_reading: string | null
+          gas_reading: string | null
           gas_safety_received: boolean
           gov_info_sheet_provided: boolean | null
           gov_info_sheet_received: boolean
@@ -74,6 +76,7 @@ export type Database = {
           user_id: string
           water_meter_photo_url: string | null
           water_meter_reading: string | null
+          water_reading: string | null
         }
         Insert: {
           completed_at?: string | null
@@ -81,9 +84,11 @@ export type Database = {
           eicr_received?: boolean
           electric_meter_photo_url?: string | null
           electric_meter_reading?: string | null
+          electric_reading?: string | null
           epc_received?: boolean
           gas_meter_photo_url?: string | null
           gas_meter_reading?: string | null
+          gas_reading?: string | null
           gas_safety_received?: boolean
           gov_info_sheet_provided?: boolean | null
           gov_info_sheet_received?: boolean
@@ -99,6 +104,7 @@ export type Database = {
           user_id: string
           water_meter_photo_url?: string | null
           water_meter_reading?: string | null
+          water_reading?: string | null
         }
         Update: {
           completed_at?: string | null
@@ -106,9 +112,11 @@ export type Database = {
           eicr_received?: boolean
           electric_meter_photo_url?: string | null
           electric_meter_reading?: string | null
+          electric_reading?: string | null
           epc_received?: boolean
           gas_meter_photo_url?: string | null
           gas_meter_reading?: string | null
+          gas_reading?: string | null
           gas_safety_received?: boolean
           gov_info_sheet_provided?: boolean | null
           gov_info_sheet_received?: boolean
@@ -124,6 +132,7 @@ export type Database = {
           user_id?: string
           water_meter_photo_url?: string | null
           water_meter_reading?: string | null
+          water_reading?: string | null
         }
         Relationships: [
           {
@@ -200,7 +209,19 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      induction_report_data: {
+        Row: {
+          completion_date: string | null
+          electric_reading: string | null
+          gas_reading: string | null
+          induction_id: string | null
+          landlord_name: string | null
+          property_address: string | null
+          tenant_signature: string | null
+          water_reading: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never

@@ -225,44 +225,111 @@ const InductionWizard = () => {
   /* ─── progress ─── */
   const progressPercent = Math.round(((step + 1) / STEPS.length) * 100);
 
-  /* ─── save ─── */
-  const handleSave = () => {
-    const induction = {
-      id: crypto.randomUUID(),
-      propertyId,
-      gasMeterReading: data.gas.reading,
-      gasMeterPhotoUrl: data.gas.photoUrl,
-      electricMeterReading: data.electric.reading,
-      electricMeterPhotoUrl: data.electric.photoUrl,
-      waterMeterReading: data.water.reading,
-      waterMeterPhotoUrl: data.water.photoUrl,
-      smokeAlarmsTested: data.smokeAlarmsTested,
-      carbonMonoxideTested: data.carbonMonoxideTested,
-      stopcockShown: data.stopcockShown,
-      epcReceived: data.epcReceived,
-      gasSafetyReceived: data.gasSafetyReceived,
-      eicrReceived: data.eicrReceived,
-      howToRentReceived: data.howToRentReceived,
-      govInfoSheetReceived: data.govInfoSheetReceived,
-      tenantSignature: data.tenantSignature,
-      completedAt: new Date().toISOString(),
-    };
-    const existing = JSON.parse(localStorage.getItem("landy-inductions") || "[]");
-    localStorage.setItem("landy-inductions", JSON.stringify([...existing, induction]));
-    toast({ title: "Induction complete ✓", description: "All details have been saved." });
+  /* ─── save to Supabase ─── */
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!propertyId) {
+      toast({ title: "Error", description: "No property selected.", variant: "destructive" });
+      return;
+    }
+
+    setSaving(true);
+
+    // Get current user (may be null if auth not yet implemented)
+    const { data: authData } = await supabase.auth.getUser();
+    const userId = authData?.user?.id;
+
+    if (!userId) {
+      // Fallback to localStorage if not authenticated
+      const induction = {
+        propertyId,
+        gas_reading: data.gas.reading,
+        electric_reading: data.electric.reading,
+        water_reading: data.water.reading,
+        gas_meter_photo_url: data.gas.photoUrl,
+        electric_meter_photo_url: data.electric.photoUrl,
+        water_meter_photo_url: data.water.photoUrl,
+        smoke_alarm_photo_url: data.alarmTestPhotoUrl,
+        smoke_alarms_tested: data.smokeAlarmsTested,
+        stopcock_located: data.stopcockShown,
+        gas_safety_received: data.gasSafetyReceived,
+        epc_received: data.epcReceived,
+        eicr_received: data.eicrReceived,
+        how_to_rent_received: data.howToRentReceived,
+        gov_info_sheet_received: data.govInfoSheetReceived,
+        how_to_rent_2026_provided: data.howToRentReceived,
+        gov_info_sheet_provided: data.govInfoSheetReceived,
+        tenant_signature: data.tenantSignature,
+        completed_at: new Date().toISOString(),
+      };
+      const existing = JSON.parse(localStorage.getItem("landy-inductions") || "[]");
+      localStorage.setItem("landy-inductions", JSON.stringify([...existing, induction]));
+      toast({ title: "Induction saved locally", description: "Sign in to sync to the cloud." });
+      setSaving(false);
+      navigate("/");
+      return;
+    }
+
+    const { error } = await supabase.from("inductions").insert({
+      property_id: propertyId,
+      user_id: userId,
+      gas_reading: data.gas.reading || null,
+      electric_reading: data.electric.reading || null,
+      water_reading: data.water.reading || null,
+      gas_meter_reading: data.gas.reading || null,
+      gas_meter_photo_url: data.gas.photoUrl,
+      electric_meter_reading: data.electric.reading || null,
+      electric_meter_photo_url: data.electric.photoUrl,
+      water_meter_reading: data.water.reading || null,
+      water_meter_photo_url: data.water.photoUrl,
+      smoke_alarm_photo_url: data.alarmTestPhotoUrl,
+      smoke_alarms_tested: data.smokeAlarmsTested,
+      stopcock_located: data.stopcockShown,
+      gas_safety_received: data.gasSafetyReceived,
+      epc_received: data.epcReceived,
+      eicr_received: data.eicrReceived,
+      how_to_rent_received: data.howToRentReceived,
+      gov_info_sheet_received: data.govInfoSheetReceived,
+      how_to_rent_2026_provided: data.howToRentReceived,
+      gov_info_sheet_provided: data.govInfoSheetReceived,
+      tenant_signature: data.tenantSignature,
+      completed_at: new Date().toISOString(),
+    } as any);
+
+    setSaving(false);
+
+    if (error) {
+      toast({ title: "Save failed", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    toast({ title: "Induction complete ✓", description: "All details saved to your account." });
     navigate("/");
   };
 
-  const handleGeneratePdf = () => {
+  /* ─── PDF from induction_report_data view (Pro only) ─── */
+  const handleGeneratePdf = async () => {
     if (!isPro) {
       setProModalOpen(true);
       return;
     }
+
+    // Try fetching from the induction_report_data view for the latest saved induction
+    const { data: reportRows } = await supabase
+      .from("induction_report_data" as any)
+      .select("*")
+      .eq("property_address", propertyAddress)
+      .order("completion_date", { ascending: false })
+      .limit(1);
+
+    const report = (reportRows as any)?.[0];
+
     generateHandoverPdf({
-      propertyAddress,
-      gas: { reading: data.gas.reading, photoTaken: !!data.gas.photoUrl },
-      electric: { reading: data.electric.reading, photoTaken: !!data.electric.photoUrl },
-      water: { reading: data.water.reading, photoTaken: !!data.water.photoUrl },
+      propertyAddress: report?.property_address || propertyAddress,
+      gas: { reading: report?.gas_reading || data.gas.reading, photoTaken: !!data.gas.photoUrl },
+      electric: { reading: report?.electric_reading || data.electric.reading, photoTaken: !!data.electric.photoUrl },
+      water: { reading: report?.water_reading || data.water.reading, photoTaken: !!data.water.photoUrl },
       smokeAlarmsTested: data.smokeAlarmsTested,
       carbonMonoxideTested: data.carbonMonoxideTested,
       stopcockShown: data.stopcockShown,
@@ -270,10 +337,10 @@ const InductionWizard = () => {
       epcReceived: data.epcReceived,
       eicrReceived: data.eicrReceived,
       govInfoSheetReceived: data.govInfoSheetReceived,
-      tenantSignature: data.tenantSignature,
-      completedAt: new Date().toISOString(),
+      tenantSignature: report?.tenant_signature || data.tenantSignature,
+      completedAt: report?.completion_date || new Date().toISOString(),
     });
-    toast({ title: "PDF generated", description: "Your handover certificate has been downloaded." });
+    toast({ title: "PDF generated", description: "Your signed certificate has been downloaded." });
   };
 
   const serifFont = { fontFamily: "Georgia, 'Times New Roman', serif" };
@@ -765,14 +832,16 @@ const InductionWizard = () => {
             </button>
           ) : (
             <button
-              className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl h-12 text-sm font-medium transition-opacity hover:opacity-90"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl h-12 text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
               style={{
                 backgroundColor: "hsl(var(--hygge-sage))",
                 color: "hsl(var(--hygge-sage-foreground))",
               }}
               onClick={handleSave}
+              disabled={saving}
             >
-              <Check className="w-4 h-4" /> Save & Finish
+              {saving ? <span className="landy-spinner" /> : <Check className="w-4 h-4" />}
+              {saving ? "Saving…" : "Save & Finish"}
             </button>
           )}
         </div>
