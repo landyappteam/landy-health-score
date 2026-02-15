@@ -79,11 +79,14 @@ export type Database = {
           is_water_meter_applicable: boolean | null
           mould_check_passed: boolean | null
           property_id: string
+          renters_rights_confirmed: boolean | null
           smoke_alarm_photo_url: string | null
           smoke_alarm_tested: boolean | null
           smoke_alarms_tested: boolean
+          statement_due_date: string | null
           stopcock_located: boolean
           tenant_signature: string | null
+          tenant_statement_sent: boolean | null
           updated_at: string
           user_id: string
           water_meter_photo_url: string | null
@@ -121,11 +124,14 @@ export type Database = {
           is_water_meter_applicable?: boolean | null
           mould_check_passed?: boolean | null
           property_id: string
+          renters_rights_confirmed?: boolean | null
           smoke_alarm_photo_url?: string | null
           smoke_alarm_tested?: boolean | null
           smoke_alarms_tested?: boolean
+          statement_due_date?: string | null
           stopcock_located?: boolean
           tenant_signature?: string | null
+          tenant_statement_sent?: boolean | null
           updated_at?: string
           user_id: string
           water_meter_photo_url?: string | null
@@ -163,11 +169,14 @@ export type Database = {
           is_water_meter_applicable?: boolean | null
           mould_check_passed?: boolean | null
           property_id?: string
+          renters_rights_confirmed?: boolean | null
           smoke_alarm_photo_url?: string | null
           smoke_alarm_tested?: boolean | null
           smoke_alarms_tested?: boolean
+          statement_due_date?: string | null
           stopcock_located?: boolean
           tenant_signature?: string | null
+          tenant_statement_sent?: boolean | null
           updated_at?: string
           user_id?: string
           water_meter_photo_url?: string | null
