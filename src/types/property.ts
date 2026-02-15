@@ -8,11 +8,16 @@ export interface ComplianceStatus {
 
 export type ComplianceNA = Partial<Record<keyof ComplianceStatus, boolean>>;
 
+export type PropertyType = "house" | "flat" | "hmo";
+
 export interface Property {
   id: string;
   address: string;
   compliance: ComplianceStatus;
   complianceNA?: ComplianceNA;
+  propertyType?: PropertyType;
+  mouldCheckPassed?: boolean;
+  windowRestrictorsOk?: boolean;
 }
 
 export interface VaultDocument {
