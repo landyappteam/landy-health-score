@@ -25,9 +25,8 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Sticky search header */}
-      <div className="sticky top-0 z-30 border-b border-border shadow-sm" style={{ backgroundColor: "hsl(var(--hygge-cream))" }}>
+      <div className="sticky top-0 z-30 border-b border-border shadow-sm" style={{ backgroundColor: "#FAF9F6" }}>
         <div className="mx-auto max-w-lg px-4">
-          {/* Top bar */}
           <header className="flex items-center justify-between pt-4 pb-2">
             <div className="flex items-center gap-2.5">
               <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-primary-foreground">
@@ -59,8 +58,6 @@ const Index = () => {
               </button>
             </div>
           </header>
-
-          {/* Compact add property form */}
           <div className="pb-3">
             <AddPropertyForm onAdd={addProperty} />
           </div>
@@ -68,20 +65,20 @@ const Index = () => {
       </div>
 
       {/* Main content */}
-      <div className="mx-auto max-w-lg px-4 pb-8">
-        {/* Score */}
-        <ComplianceScore score={healthScore} propertyCount={properties.length} />
-
-        {/* Risk Assessment */}
-        <RiskAssessmentCard properties={properties} />
+      <div className="mx-auto max-w-lg px-4 pb-10">
+        {/* Action Center: Score + Risk grouped */}
+        <section className="py-6 space-y-1">
+          <ComplianceScore score={healthScore} propertyCount={properties.length} />
+          <RiskAssessmentCard properties={properties} />
+        </section>
 
         {/* Properties List */}
         {properties.length > 0 && (
-          <div className="rounded-2xl p-4 -mx-1" style={{ backgroundColor: "#FAF9F6" }}>
-            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3 px-1">
+          <section>
+            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-4">
               Your Properties
             </h2>
-            <div className="space-y-4">
+            <div className="space-y-6">
               {properties.map((property) => (
                 <PropertyCard
                   key={property.id}
@@ -94,7 +91,7 @@ const Index = () => {
                 />
               ))}
             </div>
-          </div>
+          </section>
         )}
 
         {properties.length === 0 && (
