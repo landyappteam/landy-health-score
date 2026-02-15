@@ -60,7 +60,9 @@ export type Database = {
           gas_meter_photo_url: string | null
           gas_meter_reading: string | null
           gas_safety_received: boolean
+          gov_info_sheet_provided: boolean | null
           gov_info_sheet_received: boolean
+          how_to_rent_2026_provided: boolean | null
           how_to_rent_received: boolean
           id: string
           property_id: string
@@ -82,7 +84,9 @@ export type Database = {
           gas_meter_photo_url?: string | null
           gas_meter_reading?: string | null
           gas_safety_received?: boolean
+          gov_info_sheet_provided?: boolean | null
           gov_info_sheet_received?: boolean
+          how_to_rent_2026_provided?: boolean | null
           how_to_rent_received?: boolean
           id?: string
           property_id: string
@@ -104,7 +108,9 @@ export type Database = {
           gas_meter_photo_url?: string | null
           gas_meter_reading?: string | null
           gas_safety_received?: boolean
+          gov_info_sheet_provided?: boolean | null
           gov_info_sheet_received?: boolean
+          how_to_rent_2026_provided?: boolean | null
           how_to_rent_received?: boolean
           id?: string
           property_id?: string
