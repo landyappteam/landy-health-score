@@ -9,6 +9,7 @@ interface AddTenancyFormProps {
     tenant_email?: string;
     tenant_phone?: string;
     start_date: string;
+    end_date?: string;
     monthly_rent: number;
     deposit_amount?: number;
     deposit_scheme_ref?: string;
@@ -21,6 +22,7 @@ const AddTenancyForm = ({ propertyId, onAdd, onCancel }: AddTenancyFormProps) =>
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [startDate, setStartDate] = useState(new Date().toISOString().split("T")[0]);
+  const [endDate, setEndDate] = useState("");
   const [rent, setRent] = useState("");
   const [deposit, setDeposit] = useState("");
   const [schemeRef, setSchemeRef] = useState("");
@@ -34,6 +36,7 @@ const AddTenancyForm = ({ propertyId, onAdd, onCancel }: AddTenancyFormProps) =>
       tenant_email: email.trim() || undefined,
       tenant_phone: phone.trim() || undefined,
       start_date: startDate,
+      end_date: endDate || undefined,
       monthly_rent: parseFloat(rent),
       deposit_amount: deposit ? parseFloat(deposit) : undefined,
       deposit_scheme_ref: schemeRef.trim() || undefined,
@@ -68,6 +71,10 @@ const AddTenancyForm = ({ propertyId, onAdd, onCancel }: AddTenancyFormProps) =>
           <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={inputClass} required />
         </div>
         <div>
+          <label className="text-xs font-medium text-muted-foreground mb-1 block">End Date (optional)</label>
+          <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className={inputClass} />
+        </div>
+        <div>
           <label className="text-xs font-medium text-muted-foreground mb-1 block">Monthly Rent (£) *</label>
           <input type="number" step="0.01" min="0" value={rent} onChange={(e) => setRent(e.target.value)} placeholder="1200" className={inputClass} required />
         </div>
@@ -75,7 +82,7 @@ const AddTenancyForm = ({ propertyId, onAdd, onCancel }: AddTenancyFormProps) =>
           <label className="text-xs font-medium text-muted-foreground mb-1 block">Deposit (£)</label>
           <input type="number" step="0.01" min="0" value={deposit} onChange={(e) => setDeposit(e.target.value)} placeholder="1200" className={inputClass} />
         </div>
-        <div>
+        <div className="col-span-2">
           <label className="text-xs font-medium text-muted-foreground mb-1 block">Deposit Scheme Ref</label>
           <input value={schemeRef} onChange={(e) => setSchemeRef(e.target.value)} placeholder="DPS-12345" className={inputClass} />
         </div>

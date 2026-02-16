@@ -40,6 +40,12 @@ const TenancyCard = ({ tenancy, onEnd, onEdit, onRentIncrease, onServeNotice }: 
           <PoundSterling className="w-3 h-3" />
           {fmt(tenancy.monthly_rent)}/month
         </div>
+        {tenancy.end_date && (
+          <div className="flex items-center gap-1.5 col-span-2">
+            <Calendar className="w-3 h-3" />
+            Ended {new Date(tenancy.end_date).toLocaleDateString("en-GB")}
+          </div>
+        )}
       </div>
 
       {tenancy.is_active && (

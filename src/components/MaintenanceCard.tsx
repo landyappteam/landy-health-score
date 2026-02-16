@@ -1,4 +1,4 @@
-import { Droplet, Wrench, Zap, AlertTriangle, Bug, HelpCircle, Clock, CheckCircle2, ArrowUpCircle } from "lucide-react";
+import { Droplet, Wrench, Zap, AlertTriangle, Bug, HelpCircle, Clock, CheckCircle2, ArrowUpCircle, Flame } from "lucide-react";
 import type { MaintenanceRequest } from "@/hooks/useMaintenance";
 
 const issueIcons: Record<string, typeof Droplet> = {
@@ -6,6 +6,7 @@ const issueIcons: Record<string, typeof Droplet> = {
   plumbing: Wrench,
   electrical: Zap,
   structural: AlertTriangle,
+  log_burner: Flame,
   pest: Bug,
   other: HelpCircle,
 };
