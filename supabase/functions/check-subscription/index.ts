@@ -17,12 +17,6 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    { auth: { persistSession: false } }
-  );
-
   try {
     logStep("Function started");
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
@@ -32,7 +26,15 @@ serve(async (req) => {
     if (!authHeader) throw new Error("No authorization header");
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+
+    // Use anon key with user's auth header for getUser validation
+    const supabaseUserClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: userData, error: userError } = await supabaseUserClient.auth.getUser(token);
     if (userError) throw new Error(`Auth error: ${userError.message}`);
     const user = userData.user;
     if (!user?.email) throw new Error("User not authenticated");
@@ -41,10 +43,16 @@ serve(async (req) => {
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
 
+    // Service role client for profile mutations (bypasses RLS)
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
+
     if (customers.data.length === 0) {
       logStep("No Stripe customer found");
-      // Update profile to free
-      await supabaseClient.from("profiles").update({ subscription_tier: "free" }).eq("id", user.id);
+      await supabaseAdmin.from("profiles").update({ subscription_tier: "free" }).eq("id", user.id);
       return new Response(JSON.stringify({ subscribed: false, tier: "free" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -69,7 +77,7 @@ serve(async (req) => {
     }
 
     // Sync tier to profiles table
-    await supabaseClient.from("profiles").update({ subscription_tier: tier }).eq("id", user.id);
+    await supabaseAdmin.from("profiles").update({ subscription_tier: tier }).eq("id", user.id);
     logStep("Profile updated", { tier });
 
     return new Response(JSON.stringify({ subscribed: hasActive, tier, subscription_end: subscriptionEnd }), {
