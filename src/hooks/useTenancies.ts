@@ -107,6 +107,24 @@ export function useTenancies(propertyId?: string) {
     fetchTenancies();
   }, [toast, fetchTenancies]);
 
+  const updateTenancy = useCallback(async (tenancyId: string, data: {
+    tenant_name?: string;
+    tenant_email?: string | null;
+    tenant_phone?: string | null;
+    start_date?: string;
+    monthly_rent?: number;
+    deposit_amount?: number | null;
+    deposit_scheme_ref?: string | null;
+  }) => {
+    const { error } = await supabase.from("tenancies").update(data).eq("id", tenancyId);
+    if (error) {
+      toast({ title: "Failed to update tenancy", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Tenancy updated" });
+    fetchTenancies();
+  }, [toast, fetchTenancies]);
+
   const addRentIncrease = useCallback(async (data: {
     tenancy_id: string;
     current_rent: number;
@@ -184,6 +202,7 @@ export function useTenancies(propertyId?: string) {
     loading,
     addTenancy,
     endTenancy,
+    updateTenancy,
     addRentIncrease,
     addLegalNotice,
     refetch: fetchTenancies,

@@ -1,14 +1,15 @@
-import { Users, Calendar, PoundSterling, Ban, FileWarning } from "lucide-react";
+import { Users, Calendar, PoundSterling, Ban, FileWarning, Pencil } from "lucide-react";
 import type { Tenancy } from "@/hooks/useTenancies";
 
 interface TenancyCardProps {
   tenancy: Tenancy;
   onEnd: (id: string) => void;
+  onEdit: (tenancy: Tenancy) => void;
   onRentIncrease: (tenancy: Tenancy) => void;
   onServeNotice: (tenancy: Tenancy) => void;
 }
 
-const TenancyCard = ({ tenancy, onEnd, onRentIncrease, onServeNotice }: TenancyCardProps) => {
+const TenancyCard = ({ tenancy, onEnd, onEdit, onRentIncrease, onServeNotice }: TenancyCardProps) => {
   const fmt = (n: number) =>
     new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP", maximumFractionDigits: 0 }).format(n);
 
@@ -42,7 +43,14 @@ const TenancyCard = ({ tenancy, onEnd, onRentIncrease, onServeNotice }: TenancyC
       </div>
 
       {tenancy.is_active && (
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <button
+            onClick={() => onEdit(tenancy)}
+            className="flex items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-accent transition-colors"
+          >
+            <Pencil className="w-3 h-3" />
+            Edit
+          </button>
           <button
             onClick={() => onRentIncrease(tenancy)}
             className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-accent transition-colors"
