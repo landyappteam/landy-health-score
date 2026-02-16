@@ -49,6 +49,54 @@ export type Database = {
           },
         ]
       }
+      communication_logs: {
+        Row: {
+          id: string
+          logged_at: string
+          method: string
+          property_id: string
+          related_request_id: string | null
+          summary: string
+          tenant_name: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          logged_at?: string
+          method: string
+          property_id: string
+          related_request_id?: string | null
+          summary: string
+          tenant_name: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          logged_at?: string
+          method?: string
+          property_id?: string
+          related_request_id?: string | null
+          summary?: string
+          tenant_name?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communication_logs_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communication_logs_related_request_id_fkey"
+            columns: ["related_request_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           added_at: string
@@ -291,6 +339,59 @@ export type Database = {
             columns: ["tenancy_id"]
             isOneToOne: false
             referencedRelation: "tenancies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_requests: {
+        Row: {
+          description: string
+          id: string
+          issue_type: string
+          photo_urls: string[] | null
+          priority: string
+          property_id: string
+          remedial_deadline: string | null
+          reported_at: string
+          resolved_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          description: string
+          id?: string
+          issue_type: string
+          photo_urls?: string[] | null
+          priority?: string
+          property_id: string
+          remedial_deadline?: string | null
+          reported_at?: string
+          resolved_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          description?: string
+          id?: string
+          issue_type?: string
+          photo_urls?: string[] | null
+          priority?: string
+          property_id?: string
+          remedial_deadline?: string | null
+          reported_at?: string
+          resolved_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_requests_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
             referencedColumns: ["id"]
           },
         ]
