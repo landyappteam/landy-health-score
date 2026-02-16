@@ -7,6 +7,7 @@ import { useProperties } from "@/hooks/useProperties";
 import { useUserTier } from "@/hooks/useUserTier";
 import TenancyCard from "@/components/TenancyCard";
 import AddTenancyForm from "@/components/AddTenancyForm";
+import EditTenancyModal from "@/components/EditTenancyModal";
 import NoticeWizard from "@/components/NoticeWizard";
 import RentIncreaseForm from "@/components/RentIncreaseForm";
 import MaintenanceForm from "@/components/MaintenanceForm";
@@ -32,7 +33,7 @@ const PropertyDetailPage = () => {
   const { properties } = useProperties();
   const { tier } = useUserTier();
   const isPro = tier === "pro";
-  const { tenancies, legalNotices, rentIncreases, loading, addTenancy, endTenancy, addRentIncrease, addLegalNotice } = useTenancies(propertyId);
+  const { tenancies, legalNotices, rentIncreases, loading, addTenancy, endTenancy, updateTenancy, addRentIncrease, addLegalNotice } = useTenancies(propertyId);
   const { requests, commsLogs, loading: maintLoading, addRequest, updateRequestStatus, addCommsLog } = useMaintenance(propertyId);
 
   const [showAddTenancy, setShowAddTenancy] = useState(false);
@@ -41,6 +42,7 @@ const PropertyDetailPage = () => {
   const [rentTarget, setRentTarget] = useState<Tenancy | null>(null);
   const [proModalOpen, setProModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"tenancies" | "maintenance" | "comms">("tenancies");
+  const [editTarget, setEditTarget] = useState<Tenancy | null>(null);
 
   const HeatingIcon = heatingMeta[heating].icon;
   const activeTenancies = tenancies.filter((t) => t.is_active);
@@ -166,6 +168,7 @@ const PropertyDetailPage = () => {
                 <div className="space-y-3">
                   {activeTenancies.map((t) => (
                     <TenancyCard key={t.id} tenancy={t} onEnd={endTenancy}
+                      onEdit={(t) => setEditTarget(t)}
                       onRentIncrease={(t) => setRentTarget(t)} onServeNotice={(t) => setNoticeTarget(t)} />
                   ))}
                 </div>
@@ -224,7 +227,7 @@ const PropertyDetailPage = () => {
                 <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Past Tenancies</h2>
                 <div className="space-y-3 opacity-60">
                   {pastTenancies.map((t) => (
-                    <TenancyCard key={t.id} tenancy={t} onEnd={() => {}} onRentIncrease={() => {}} onServeNotice={() => {}} />
+                    <TenancyCard key={t.id} tenancy={t} onEnd={() => {}} onEdit={() => {}} onRentIncrease={() => {}} onServeNotice={() => {}} />
                   ))}
                 </div>
               </section>
@@ -289,6 +292,11 @@ const PropertyDetailPage = () => {
         <RentIncreaseForm tenancy={rentTarget}
           onSubmit={(data) => { addRentIncrease(data); setRentTarget(null); }}
           onClose={() => setRentTarget(null)} />
+      )}
+      {editTarget && (
+        <EditTenancyModal tenancy={editTarget}
+          onSave={(id, data) => { updateTenancy(id, data); setEditTarget(null); }}
+          onClose={() => setEditTarget(null)} />
       )}
       <ProUpsellModal open={proModalOpen} onClose={() => setProModalOpen(false)} />
     </div>
