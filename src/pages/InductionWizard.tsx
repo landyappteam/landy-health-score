@@ -380,19 +380,30 @@ const InductionWizard = () => {
     const { data: authData } = await supabase.auth.getUser();
     const userId = authData?.user?.id;
 
-    // Validate property still exists before inserting
+    // Ensure property exists in Supabase (it may only exist in localStorage)
     if (userId) {
-      const { data: propCheck, error: propError } = await supabase
+      const { data: propCheck } = await supabase
         .from("properties")
         .select("id")
         .eq("id", propertyId)
         .eq("user_id", userId)
         .maybeSingle();
-      if (propError || !propCheck) {
-        toast({ title: "Property not found", description: "This property may have been deleted. Returning to dashboard.", variant: "destructive" });
-        setSaving(false);
-        navigate("/", { replace: true });
-        return;
+
+      if (!propCheck) {
+        // Property exists locally but not in Supabase — sync it now
+        const heatingType = heatingParam || "gas";
+        const { error: insertError } = await supabase.from("properties").insert({
+          id: propertyId,
+          address: propertyAddress,
+          user_id: userId,
+          heating_type: heatingType,
+          has_gas_supply: heatingType === "gas",
+        });
+        if (insertError) {
+          toast({ title: "Save failed", description: "Could not sync property: " + insertError.message, variant: "destructive" });
+          setSaving(false);
+          return;
+        }
       }
     }
 
