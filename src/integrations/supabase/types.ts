@@ -245,6 +245,56 @@ export type Database = {
           },
         ]
       }
+      legal_notices: {
+        Row: {
+          created_at: string
+          expiry_date: string | null
+          grounds: string[] | null
+          id: string
+          notes: string | null
+          notice_date: string
+          notice_type: string
+          status: string
+          tenancy_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expiry_date?: string | null
+          grounds?: string[] | null
+          id?: string
+          notes?: string | null
+          notice_date: string
+          notice_type: string
+          status?: string
+          tenancy_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expiry_date?: string | null
+          grounds?: string[] | null
+          id?: string
+          notes?: string | null
+          notice_date?: string
+          notice_type?: string
+          status?: string
+          tenancy_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_notices_tenancy_id_fkey"
+            columns: ["tenancy_id"]
+            isOneToOne: false
+            referencedRelation: "tenancies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           email: string | null
@@ -340,6 +390,106 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      rent_increases: {
+        Row: {
+          created_at: string
+          current_rent: number
+          effective_date: string
+          id: string
+          new_rent: number
+          notice_served_date: string
+          section_13_generated: boolean
+          tenancy_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_rent: number
+          effective_date: string
+          id?: string
+          new_rent: number
+          notice_served_date: string
+          section_13_generated?: boolean
+          tenancy_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_rent?: number
+          effective_date?: string
+          id?: string
+          new_rent?: number
+          notice_served_date?: string
+          section_13_generated?: boolean
+          tenancy_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rent_increases_tenancy_id_fkey"
+            columns: ["tenancy_id"]
+            isOneToOne: false
+            referencedRelation: "tenancies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenancies: {
+        Row: {
+          created_at: string
+          deposit_amount: number | null
+          deposit_scheme_ref: string | null
+          id: string
+          is_active: boolean
+          monthly_rent: number
+          property_id: string
+          start_date: string
+          tenant_email: string | null
+          tenant_name: string
+          tenant_phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          deposit_amount?: number | null
+          deposit_scheme_ref?: string | null
+          id?: string
+          is_active?: boolean
+          monthly_rent: number
+          property_id: string
+          start_date: string
+          tenant_email?: string | null
+          tenant_name: string
+          tenant_phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          deposit_amount?: number | null
+          deposit_scheme_ref?: string | null
+          id?: string
+          is_active?: boolean
+          monthly_rent?: number
+          property_id?: string
+          start_date?: string
+          tenant_email?: string | null
+          tenant_name?: string
+          tenant_phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenancies_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

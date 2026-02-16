@@ -8,6 +8,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import VaultPage from "./pages/VaultPage";
 import InductionWizard from "./pages/InductionWizard";
+import PropertyDetailPage from "./pages/PropertyDetailPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/vault" element={<ProtectedRoute><VaultPage /></ProtectedRoute>} />
             <Route path="/induction" element={<ProtectedRoute><InductionWizard /></ProtectedRoute>} />
+            <Route path="/property" element={<ProtectedRoute><PropertyDetailPage /></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
