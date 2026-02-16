@@ -1,5 +1,8 @@
 import { ShieldCheck, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { toast } from "@/hooks/use-toast";
 
 interface ProUpsellModalProps {
   open: boolean;
@@ -7,7 +10,24 @@ interface ProUpsellModalProps {
 }
 
 const ProUpsellModal = ({ open, onClose }: ProUpsellModalProps) => {
+  const [loading, setLoading] = useState(false);
+
   if (!open) return null;
+
+  const handleCheckout = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-checkout");
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, "_blank");
+      }
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message || "Could not start checkout", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -42,18 +62,16 @@ const ProUpsellModal = ({ open, onClose }: ProUpsellModalProps) => {
 
         <div className="space-y-2 pt-2">
           <button
-            className="w-full inline-flex items-center justify-center gap-2 rounded-[12px] h-11 text-sm font-medium transition-opacity hover:opacity-90"
+            disabled={loading}
+            className="w-full inline-flex items-center justify-center gap-2 rounded-[12px] h-11 text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-60"
             style={{
               backgroundColor: "hsl(var(--hygge-sage))",
               color: "hsl(var(--hygge-sage-foreground))",
             }}
-            onClick={() => {
-              // TODO: navigate to Stripe checkout
-              onClose();
-            }}
+            onClick={handleCheckout}
           >
             <Sparkles className="w-4 h-4" />
-            See Pro Plans
+            {loading ? "Opening checkout…" : "Upgrade — £4.99/mo"}
           </button>
           <Button variant="ghost" className="w-full rounded-[12px]" onClick={onClose}>
             Maybe later
