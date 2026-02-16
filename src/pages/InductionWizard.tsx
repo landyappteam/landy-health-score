@@ -98,6 +98,11 @@ interface InductionData {
   hmoLicense: boolean;
   fireExtinguishers: boolean;
   fireExitSignage: boolean;
+  // Log burner / solid fuel
+  hasLogBurner: boolean;
+  logBurnerServiced: boolean;
+  chimneySwept: boolean;
+  logBurnerNA: boolean;
   tenantSignature: string | null;
 }
 
@@ -229,6 +234,10 @@ const InductionWizard = () => {
     hmoLicense: false,
     fireExtinguishers: false,
     fireExitSignage: false,
+    hasLogBurner: false,
+    logBurnerServiced: false,
+    chimneySwept: false,
+    logBurnerNA: false,
     tenantSignature: null,
   }));
 
@@ -535,13 +544,19 @@ const InductionWizard = () => {
     { label: "Damp/Mould Check", value: data.dampMouldCheck ? "✓" : "✗", na: false },
     { label: "Window Restrictors", value: data.windowRestrictorsNA ? "N/A" : (data.windowRestrictors ? "✓" : "✗"), na: data.windowRestrictorsNA },
     { label: "Stopcock Location", value: data.stopcockNA ? "N/A" : (data.stopcockShown ? "✓" : "✗"), na: data.stopcockNA },
+    // Log burner
+    { label: "Log Burner / Solid Fuel", value: data.logBurnerNA ? "N/A" : (data.hasLogBurner ? "Present" : "None"), na: data.logBurnerNA },
+    ...(!data.logBurnerNA && data.hasLogBurner ? [
+      { label: "Appliance Serviced (HETAS)", value: data.logBurnerServiced ? "✓" : "✗", na: false },
+      { label: "Chimney Swept", value: data.chimneySwept ? "✓" : "✗", na: false },
+    ] : []),
     ...(showBuilding ? [
       { label: "Building Specifics", value: data.buildingNA ? "N/A" : "Completed", na: data.buildingNA },
       ...(data.buildingNA ? [] : [
         { label: "Fire Doors", value: data.fireDoors ? "✓" : "✗", na: false },
         { label: "Communal Areas", value: data.communalAreas ? "✓" : "✗", na: false },
         ...(isHmo ? [
-          { label: "HMO License", value: data.hmoLicense ? "✓" : "✗", na: false },
+          { label: "HMO Licence", value: data.hmoLicense ? "✓" : "✗", na: false },
           { label: "Fire Extinguishers", value: data.fireExtinguishers ? "✓" : "✗", na: false },
           { label: "Fire Exit Signage", value: data.fireExitSignage ? "✓" : "✗", na: false },
         ] : []),
@@ -901,13 +916,14 @@ const InductionWizard = () => {
                     onCheckedChange={(v) => setData((p) => ({ ...p, smokeAlarmsTested: !!v }))} className="mt-0.5" />
                   <Label htmlFor="smokeAlarmsTested" className="text-sm cursor-pointer leading-snug">Smoke Alarms Tested</Label>
                 </div>
-                {data.hasGas && (
-                  <div className="flex items-start gap-3">
-                    <Checkbox id="carbonMonoxideTested" checked={data.carbonMonoxideTested}
-                      onCheckedChange={(v) => setData((p) => ({ ...p, carbonMonoxideTested: !!v }))} className="mt-0.5" />
-                    <Label htmlFor="carbonMonoxideTested" className="text-sm cursor-pointer leading-snug">CO Alarms Tested</Label>
-                  </div>
-                )}
+                <div className="flex items-start gap-3">
+                  <Checkbox id="carbonMonoxideTested" checked={data.carbonMonoxideTested}
+                    onCheckedChange={(v) => setData((p) => ({ ...p, carbonMonoxideTested: !!v }))} className="mt-0.5" />
+                  <Label htmlFor="carbonMonoxideTested" className="text-sm cursor-pointer leading-snug">
+                    CO Alarms Tested
+                    <span className="text-[10px] text-muted-foreground ml-1">(mandatory — includes log burner / solid fuel risk)</span>
+                  </Label>
+                </div>
                 <div className="flex items-start gap-3">
                   <Checkbox id="dampMouldCheck" checked={data.dampMouldCheck}
                     onCheckedChange={(v) => setData((p) => ({ ...p, dampMouldCheck: !!v }))} className="mt-0.5" />
@@ -970,6 +986,71 @@ const InductionWizard = () => {
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Log Burner / Solid Fuel Compliance */}
+            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg"
+                    style={{ backgroundColor: "hsl(var(--risk-warm) / 0.15)" }}>
+                    <Flame className="w-4 h-4" style={{ color: "hsl(var(--risk-warm))" }} />
+                  </div>
+                  <span className="text-sm font-semibold text-foreground">Log Burner / Solid Fuel</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] text-muted-foreground">N/A</span>
+                  <Switch
+                    checked={data.logBurnerNA}
+                    onCheckedChange={(v) => setData((p) => ({
+                      ...p,
+                      logBurnerNA: v,
+                      hasLogBurner: v ? false : p.hasLogBurner,
+                      logBurnerServiced: v ? false : p.logBurnerServiced,
+                      chimneySwept: v ? false : p.chimneySwept,
+                    }))}
+                    className="data-[state=checked]:bg-hygge-sage scale-75"
+                  />
+                </div>
+              </div>
+
+              {data.logBurnerNA ? (
+                <p className="text-xs text-muted-foreground italic">No log burner or solid fuel appliance present.</p>
+              ) : (
+                <div className="space-y-3.5">
+                  <div className="flex items-start gap-3">
+                    <Checkbox id="hasLogBurner" checked={data.hasLogBurner}
+                      onCheckedChange={(v) => setData((p) => ({ ...p, hasLogBurner: !!v }))} className="mt-0.5" />
+                    <Label htmlFor="hasLogBurner" className="text-sm cursor-pointer leading-snug">
+                      Log burner / solid fuel appliance present
+                    </Label>
+                  </div>
+
+                  {data.hasLogBurner && (
+                    <>
+                      <div className="flex items-start gap-3">
+                        <Checkbox id="logBurnerServiced" checked={data.logBurnerServiced}
+                          onCheckedChange={(v) => setData((p) => ({ ...p, logBurnerServiced: !!v }))} className="mt-0.5" />
+                        <Label htmlFor="logBurnerServiced" className="text-sm cursor-pointer leading-snug">
+                          Appliance serviced by HETAS-registered engineer
+                        </Label>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <Checkbox id="chimneySwept" checked={data.chimneySwept}
+                          onCheckedChange={(v) => setData((p) => ({ ...p, chimneySwept: !!v }))} className="mt-0.5" />
+                        <Label htmlFor="chimneySwept" className="text-sm cursor-pointer leading-snug">
+                          Chimney swept within the last 12 months
+                        </Label>
+                      </div>
+                      <div className="rounded-xl p-3" style={{ backgroundColor: "hsl(var(--risk-warm) / 0.08)" }}>
+                        <p className="text-xs text-muted-foreground">
+                          <strong>Important:</strong> All solid fuel appliances require a CO alarm in the same room. Annual chimney sweeping is strongly recommended to prevent carbon monoxide poisoning.
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Signature Pad */}

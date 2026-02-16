@@ -10,6 +10,7 @@ export interface Tenancy {
   tenant_email: string | null;
   tenant_phone: string | null;
   start_date: string;
+  end_date: string | null;
   monthly_rent: number;
   deposit_amount: number | null;
   deposit_scheme_ref: string | null;
@@ -83,12 +84,17 @@ export function useTenancies(propertyId?: string) {
     tenant_email?: string;
     tenant_phone?: string;
     start_date: string;
+    end_date?: string;
     monthly_rent: number;
     deposit_amount?: number;
     deposit_scheme_ref?: string;
   }) => {
     if (!user) return;
-    const { error } = await supabase.from("tenancies").insert({ ...data, user_id: user.id });
+    const { error } = await supabase.from("tenancies").insert({
+      ...data,
+      user_id: user.id,
+      end_date: data.end_date || null,
+    });
     if (error) {
       toast({ title: "Failed to add tenancy", description: error.message, variant: "destructive" });
       return;
@@ -98,12 +104,15 @@ export function useTenancies(propertyId?: string) {
   }, [user, toast, fetchTenancies]);
 
   const endTenancy = useCallback(async (tenancyId: string) => {
-    const { error } = await supabase.from("tenancies").update({ is_active: false }).eq("id", tenancyId);
+    const { error } = await supabase.from("tenancies").update({
+      is_active: false,
+      end_date: new Date().toISOString().split("T")[0],
+    }).eq("id", tenancyId);
     if (error) {
       toast({ title: "Failed to end tenancy", description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Tenancy ended" });
+    toast({ title: "Tenancy ended — moved to past tenancies" });
     fetchTenancies();
   }, [toast, fetchTenancies]);
 
@@ -112,6 +121,7 @@ export function useTenancies(propertyId?: string) {
     tenant_email?: string | null;
     tenant_phone?: string | null;
     start_date?: string;
+    end_date?: string | null;
     monthly_rent?: number;
     deposit_amount?: number | null;
     deposit_scheme_ref?: string | null;
@@ -133,7 +143,6 @@ export function useTenancies(propertyId?: string) {
     effective_date: string;
   }) => {
     if (!user) return;
-    // Validate: effective date must be >= 2 months from notice
     const notice = new Date(data.notice_served_date);
     const effective = new Date(data.effective_date);
     const minEffective = new Date(notice);
@@ -142,7 +151,6 @@ export function useTenancies(propertyId?: string) {
       toast({ title: "Invalid date", description: "Effective date must be at least 2 months after notice date (Section 13 requirement).", variant: "destructive" });
       return;
     }
-    // Validate: no increase within 12 months
     const tenancyIncreases = rentIncreases.filter(ri => ri.tenancy_id === data.tenancy_id);
     if (tenancyIncreases.length > 0) {
       const lastEffective = new Date(tenancyIncreases[0].effective_date);
@@ -153,7 +161,6 @@ export function useTenancies(propertyId?: string) {
         return;
       }
     }
-    // Validate: no bidding — new rent must not exceed listed amount (we just prevent decrease check)
     if (data.new_rent <= data.current_rent) {
       toast({ title: "Invalid amount", description: "New rent must be higher than current rent.", variant: "destructive" });
       return;
@@ -164,7 +171,6 @@ export function useTenancies(propertyId?: string) {
       toast({ title: "Failed to record increase", description: error.message, variant: "destructive" });
       return;
     }
-    // Update tenancy rent
     const tenancy = tenancies.find(t => t.id === data.tenancy_id);
     if (tenancy) {
       await supabase.from("tenancies").update({ monthly_rent: data.new_rent }).eq("id", data.tenancy_id);

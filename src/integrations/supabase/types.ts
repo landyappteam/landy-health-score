@@ -541,6 +541,7 @@ export type Database = {
           created_at: string
           deposit_amount: number | null
           deposit_scheme_ref: string | null
+          end_date: string | null
           id: string
           is_active: boolean
           monthly_rent: number
@@ -556,6 +557,7 @@ export type Database = {
           created_at?: string
           deposit_amount?: number | null
           deposit_scheme_ref?: string | null
+          end_date?: string | null
           id?: string
           is_active?: boolean
           monthly_rent: number
@@ -571,6 +573,7 @@ export type Database = {
           created_at?: string
           deposit_amount?: number | null
           deposit_scheme_ref?: string | null
+          end_date?: string | null
           id?: string
           is_active?: boolean
           monthly_rent?: number

@@ -9,6 +9,7 @@ interface EditTenancyModalProps {
     tenant_email?: string | null;
     tenant_phone?: string | null;
     start_date: string;
+    end_date?: string | null;
     monthly_rent: number;
     deposit_amount?: number | null;
     deposit_scheme_ref?: string | null;
@@ -21,6 +22,7 @@ const EditTenancyModal = ({ tenancy, onSave, onClose }: EditTenancyModalProps) =
   const [email, setEmail] = useState(tenancy.tenant_email || "");
   const [phone, setPhone] = useState(tenancy.tenant_phone || "");
   const [startDate, setStartDate] = useState(tenancy.start_date);
+  const [endDate, setEndDate] = useState(tenancy.end_date || "");
   const [rent, setRent] = useState(String(tenancy.monthly_rent));
   const [deposit, setDeposit] = useState(tenancy.deposit_amount ? String(tenancy.deposit_amount) : "");
   const [schemeRef, setSchemeRef] = useState(tenancy.deposit_scheme_ref || "");
@@ -33,6 +35,7 @@ const EditTenancyModal = ({ tenancy, onSave, onClose }: EditTenancyModalProps) =
       tenant_email: email.trim() || null,
       tenant_phone: phone.trim() || null,
       start_date: startDate,
+      end_date: endDate || null,
       monthly_rent: parseFloat(rent),
       deposit_amount: deposit ? parseFloat(deposit) : null,
       deposit_scheme_ref: schemeRef.trim() || null,
@@ -75,6 +78,10 @@ const EditTenancyModal = ({ tenancy, onSave, onClose }: EditTenancyModalProps) =
               <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={inputClass} required />
             </div>
             <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">End Date (optional)</label>
+              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className={inputClass} />
+            </div>
+            <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Monthly Rent (£) *</label>
               <input type="number" step="0.01" min="0" value={rent} onChange={(e) => setRent(e.target.value)} placeholder="1200" className={inputClass} required />
             </div>
@@ -82,7 +89,7 @@ const EditTenancyModal = ({ tenancy, onSave, onClose }: EditTenancyModalProps) =
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Deposit (£)</label>
               <input type="number" step="0.01" min="0" value={deposit} onChange={(e) => setDeposit(e.target.value)} placeholder="1200" className={inputClass} />
             </div>
-            <div>
+            <div className="col-span-2">
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Deposit Scheme Ref</label>
               <input value={schemeRef} onChange={(e) => setSchemeRef(e.target.value)} placeholder="DPS-12345" className={inputClass} />
             </div>
