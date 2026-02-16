@@ -273,46 +273,67 @@ const InductionWizard = () => {
 
   const handlePhotoUpload = async (meter: "gas" | "electric" | "water", file: File) => {
     updateMeter(meter, { uploading: true });
+    const { data: authData } = await supabase.auth.getUser();
+    const uid = authData?.user?.id;
+    if (!uid) {
+      toast({ title: "Upload failed", description: "You must be signed in to upload photos.", variant: "destructive" });
+      updateMeter(meter, { uploading: false });
+      return;
+    }
     const ext = file.name.split(".").pop() || "jpg";
-    const path = `${propertyId || "unknown"}/${meter}-${Date.now()}.${ext}`;
+    const path = `${uid}/${propertyId}/${meter}-${Date.now()}.${ext}`;
     const { error } = await supabase.storage.from("meter-photos").upload(path, file, { upsert: true });
     if (error) {
       toast({ title: "Upload failed", description: error.message, variant: "destructive" });
       updateMeter(meter, { uploading: false });
       return;
     }
-    const { data: urlData } = supabase.storage.from("meter-photos").getPublicUrl(path);
-    updateMeter(meter, { photoUrl: urlData.publicUrl, uploading: false });
+    const { data: urlData } = await supabase.storage.from("meter-photos").createSignedUrl(path, 3600);
+    updateMeter(meter, { photoUrl: urlData?.signedUrl || null, uploading: false });
     toast({ title: "Photo uploaded", description: `${meter.charAt(0).toUpperCase() + meter.slice(1)} meter photo saved.` });
   };
 
   const handleAlarmPhotoUpload = async (file: File) => {
     setData((p) => ({ ...p, alarmTestUploading: true }));
+    const { data: authData } = await supabase.auth.getUser();
+    const uid = authData?.user?.id;
+    if (!uid) {
+      toast({ title: "Upload failed", description: "You must be signed in.", variant: "destructive" });
+      setData((p) => ({ ...p, alarmTestUploading: false }));
+      return;
+    }
     const ext = file.name.split(".").pop() || "jpg";
-    const path = `${propertyId || "unknown"}/alarm-test-${Date.now()}.${ext}`;
+    const path = `${uid}/${propertyId}/alarm-test-${Date.now()}.${ext}`;
     const { error } = await supabase.storage.from("meter-photos").upload(path, file, { upsert: true });
     if (error) {
       toast({ title: "Upload failed", description: error.message, variant: "destructive" });
       setData((p) => ({ ...p, alarmTestUploading: false }));
       return;
     }
-    const { data: urlData } = supabase.storage.from("meter-photos").getPublicUrl(path);
-    setData((p) => ({ ...p, alarmTestPhotoUrl: urlData.publicUrl, alarmTestUploading: false }));
+    const { data: urlData } = await supabase.storage.from("meter-photos").createSignedUrl(path, 3600);
+    setData((p) => ({ ...p, alarmTestPhotoUrl: urlData?.signedUrl || null, alarmTestUploading: false }));
     toast({ title: "Photo uploaded", description: "Alarm test photo saved." });
   };
 
   const handleOilPhotoUpload = async (file: File) => {
     setData((p) => ({ ...p, oilPhotoUploading: true }));
+    const { data: authData } = await supabase.auth.getUser();
+    const uid = authData?.user?.id;
+    if (!uid) {
+      toast({ title: "Upload failed", description: "You must be signed in.", variant: "destructive" });
+      setData((p) => ({ ...p, oilPhotoUploading: false }));
+      return;
+    }
     const ext = file.name.split(".").pop() || "jpg";
-    const path = `${propertyId || "unknown"}/oil-tank-${Date.now()}.${ext}`;
+    const path = `${uid}/${propertyId}/oil-tank-${Date.now()}.${ext}`;
     const { error } = await supabase.storage.from("meter-photos").upload(path, file, { upsert: true });
     if (error) {
       toast({ title: "Upload failed", description: error.message, variant: "destructive" });
       setData((p) => ({ ...p, oilPhotoUploading: false }));
       return;
     }
-    const { data: urlData } = supabase.storage.from("meter-photos").getPublicUrl(path);
-    setData((p) => ({ ...p, oilPhotoUrl: urlData.publicUrl, oilPhotoUploading: false }));
+    const { data: urlData } = await supabase.storage.from("meter-photos").createSignedUrl(path, 3600);
+    setData((p) => ({ ...p, oilPhotoUrl: urlData?.signedUrl || null, oilPhotoUploading: false }));
     toast({ title: "Photo uploaded", description: "Oil tank photo saved." });
   };
 
